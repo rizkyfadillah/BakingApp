@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Baking App</string>
+    <string name="retry">Retry</string>
+    <string name="recipe_image">Recipe image</string>
+</resources>
