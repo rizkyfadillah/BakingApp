@@ -22,7 +22,8 @@ import dagger.Provides;
 @Module(
         subcomponents = {
                 MainActivityComponent.class,
-                RecipeDetailActivityComponent.class
+                RecipeDetailActivityComponent.class,
+                StepDetailActivityComponent.class
         },
         includes = ViewModelModule.class
 )

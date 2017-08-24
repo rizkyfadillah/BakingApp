@@ -12,33 +12,33 @@ import android.arch.persistence.room.PrimaryKey;
 @Entity(foreignKeys = {
         @ForeignKey(entity = Recipe.class,
                 parentColumns = "id",
-                childColumns = "recipe_id")}, indices = {
-        @Index(value = "recipe_id")
+                childColumns = "recipeId")}, indices = {
+        @Index(value = "recipeId")
 })
 public class Step {
     @PrimaryKey
     public final String stepId;
     public final int id;
-    public final int recipe_id;
+    public final int recipeId;
     public final String shortDescription;
     public final String description;
     public final String videoURL;
     public final String thumbnailURL;
 
-    public Step(String stepId, int id, int recipe_id, String shortDescription, String description, String videoURL, String thumbnailURL) {
+    public Step(String stepId, int id, int recipeId, String shortDescription, String description, String videoURL, String thumbnailURL) {
         this.stepId = stepId;
         this.id = id;
-        this.recipe_id = recipe_id;
+        this.recipeId = recipeId;
         this.shortDescription = shortDescription;
         this.description = description;
         this.videoURL = videoURL;
         this.thumbnailURL = thumbnailURL;
     }
 
-    public Step(Step step, String stepId, int recipe_id) {
+    public Step(Step step, String stepId, int recipeId) {
         this.stepId = stepId;
         this.id = step.id;
-        this.recipe_id = recipe_id;
+        this.recipeId = recipeId;
         this.shortDescription = step.shortDescription;
         this.description = step.description;
         this.videoURL = step.videoURL;

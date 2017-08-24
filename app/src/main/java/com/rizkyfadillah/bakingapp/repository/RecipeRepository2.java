@@ -10,6 +10,7 @@ import com.rizkyfadillah.bakingapp.api.ApiResponse;
 import com.rizkyfadillah.bakingapp.api.Service;
 import com.rizkyfadillah.bakingapp.db.BakingDb;
 import com.rizkyfadillah.bakingapp.db.RecipeDao;
+import com.rizkyfadillah.bakingapp.vo.Ingredient;
 import com.rizkyfadillah.bakingapp.vo.Recipe;
 import com.rizkyfadillah.bakingapp.vo.Resource;
 import com.rizkyfadillah.bakingapp.vo.Step;
@@ -49,8 +50,14 @@ public class RecipeRepository2 {
             protected void saveCallResult(@NonNull List<Recipe> recipes) {
                 for (Recipe recipe : recipes) {
                     List<Step> steps = new ArrayList<>();
+                    List<Ingredient> ingredients = new ArrayList<>();
+                    for (int i=0; i<recipe.ingredients.size(); i++) {
+                        String ingredientId = Integer.toString(recipe.id) + Integer.toString(i);
+                        Ingredient ingredient = recipe.ingredients.get(i);
+                        Ingredient newIngredient = new Ingredient(ingredient, ingredientId, recipe.id);
+                        ingredients.add(newIngredient);
+                    }
                     for (Step step : recipe.steps) {
-                        Timber.d(step.description);
                         String stepId = Integer.toString(recipe.id) + Integer.toString(step.id);
                         Step newStep = new Step(step, stepId, recipe.id);
                         steps.add(newStep);
@@ -58,6 +65,7 @@ public class RecipeRepository2 {
                     db.beginTransaction();
                     try {
                         recipeDao.insertRecipe(recipe);
+                        recipeDao.insertIngredients(ingredients);
                         recipeDao.insertSteps(steps);
                         db.setTransactionSuccessful();
                     } finally {
@@ -111,4 +119,46 @@ public class RecipeRepository2 {
         }.asLiveData();
     }
 
+    public LiveData<Resource<Recipe>> getRecipeDetail(int recipeId) {
+        return new NetworkBoundResource<Recipe, Recipe>() {
+            @Override
+            protected void saveCallResult(@NonNull Recipe item) {
+
+            }
+
+            @Override
+            protected boolean shouldFetch(@Nullable Recipe data) {
+                return false;
+            }
+
+            @NonNull
+            @Override
+            protected LiveData<Recipe> loadFromDb() {
+                return Transformations.switchMap(recipeDao.loadRecipe(recipeId),
+                        recipe -> {
+                            MediatorLiveData<Recipe> newRecipe = new MediatorLiveData<>();
+                            LiveData<List<Step>> stepsDbResource = recipeDao.loadSteps(recipeId);
+                            newRecipe.addSource(recipeDao.loadSteps(recipeId),
+                                    steps -> {
+                                        newRecipe.removeSource(stepsDbResource);
+                                        recipe.steps = steps;
+                                        LiveData<List<Ingredient>> ingredientsDbResource = recipeDao.loadIngredients(recipeId);
+                                        newRecipe.addSource(ingredientsDbResource,
+                                                ingredients -> {
+                                                    newRecipe.removeSource(ingredientsDbResource);
+                                                    recipe.ingredients = ingredients;
+                                                    newRecipe.setValue(recipe);
+                                                });
+                                    });
+                            return newRecipe;
+                        });
+            }
+
+            @NonNull
+            @Override
+            protected LiveData<ApiResponse<Recipe>> createCall() {
+                return null;
+            }
+        }.asLiveData();
+    }
 }

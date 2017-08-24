@@ -2,8 +2,9 @@ package com.rizkyfadillah.bakingapp.di;
 
 import android.app.Activity;
 
-import com.rizkyfadillah.bakingapp.MainActivity;
+import com.rizkyfadillah.bakingapp.RecipeListActivity;
 import com.rizkyfadillah.bakingapp.RecipeDetailActivity;
+import com.rizkyfadillah.bakingapp.StepDetailActivity;
 
 import dagger.Binds;
 import dagger.Module;
@@ -19,7 +20,7 @@ abstract class ActivityBuilder {
 
     @Binds
     @IntoMap
-    @ActivityKey(MainActivity.class)
+    @ActivityKey(RecipeListActivity.class)
     abstract AndroidInjector.Factory<? extends Activity> bindMainActivity(MainActivityComponent.Builder builder);
 
     @Binds
@@ -27,5 +28,9 @@ abstract class ActivityBuilder {
     @ActivityKey(RecipeDetailActivity.class)
     abstract AndroidInjector.Factory<? extends Activity> bindRecipeDetailActivity(RecipeDetailActivityComponent.Builder builder);
 
+    @Binds
+    @IntoMap
+    @ActivityKey(StepDetailActivity.class)
+    abstract AndroidInjector.Factory<? extends Activity> bindStepDetailActivity(StepDetailActivityComponent.Builder builder);
 
 }

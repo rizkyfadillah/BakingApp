@@ -6,6 +6,7 @@ import android.arch.persistence.room.Insert;
 import android.arch.persistence.room.OnConflictStrategy;
 import android.arch.persistence.room.Query;
 
+import com.rizkyfadillah.bakingapp.vo.Ingredient;
 import com.rizkyfadillah.bakingapp.vo.Recipe;
 import com.rizkyfadillah.bakingapp.vo.Step;
 
@@ -46,9 +47,16 @@ public abstract class RecipeDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     public abstract void insertSteps(List<Step> steps);
 
-    @Query("SELECT * FROM step WHERE recipe_id = :recipeId")
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    public abstract void insertIngredients(List<Ingredient> ingredients);
+
+    @Query("SELECT * FROM step WHERE recipeId = :recipeId")
     public abstract LiveData<List<Step>> loadSteps(int recipeId);
 
-    @Query("SELECT * FROM step WHERE recipe_id = :recipeId")
+    @Query("SELECT * FROM ingredient WHERE recipeId = :recipeId")
+    public abstract LiveData<List<Ingredient>> loadIngredients(int recipeId);
+
+    @Query("SELECT * FROM step WHERE recipeId = :recipeId")
     public abstract Flowable<List<Step>> loadSteps2(int recipeId);
+
 }

@@ -25,13 +25,20 @@ public class RecipeDetailViewModel2 extends ViewModel {
 
     private LiveData<Resource<List<Step>>> steps;
 
+    private LiveData<Resource<Recipe>> recipe;
+
     @Inject
     RecipeDetailViewModel2(RecipeRepository2 recipeRepository) {
         steps = Transformations.switchMap(recipeId, recipeRepository::getRecipeSteps);
+        recipe = Transformations.switchMap(recipeId, recipeRepository::getRecipeDetail);
     }
 
     public LiveData<Resource<List<Step>>> getSteps() {
         return steps;
+    }
+
+    public LiveData<Resource<Recipe>> getRecipe() {
+        return recipe;
     }
 
     void goGetRecipeDetail(int recipeId) {

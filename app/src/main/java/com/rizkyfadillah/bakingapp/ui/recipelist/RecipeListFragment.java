@@ -40,6 +40,7 @@ public class RecipeListFragment extends LifecycleFragment implements RecipeAdapt
     private static final String TAG = RecipeListFragment.class.getSimpleName();
 
     private final String EXTRA_RECIPE_ID = "recipe_id";
+    private final String EXTRA_RECIPE_NAME = "recipe_name";
 
     @Inject
     ViewModelProvider.Factory viewModelFactory;
@@ -107,6 +108,7 @@ public class RecipeListFragment extends LifecycleFragment implements RecipeAdapt
     public void onClickRecipe(int position) {
         Intent intent = new Intent(getActivity(), RecipeDetailActivity.class);
         intent.putExtra(EXTRA_RECIPE_ID, recipes.get(position).id);
+        intent.putExtra(EXTRA_RECIPE_NAME, recipes.get(position).name);
         startActivity(intent);
     }
 

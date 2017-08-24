@@ -1,6 +1,6 @@
 package com.rizkyfadillah.bakingapp.di;
 
-import com.rizkyfadillah.bakingapp.MainActivity;
+import com.rizkyfadillah.bakingapp.RecipeListActivity;
 import com.rizkyfadillah.bakingapp.ui.recipelist.RecipeListFragmentProvider;
 
 import dagger.Subcomponent;
@@ -15,9 +15,9 @@ import dagger.android.AndroidInjector;
                 RecipeListFragmentProvider.class
         }
 )
-interface MainActivityComponent extends AndroidInjector<MainActivity> {
+interface MainActivityComponent extends AndroidInjector<RecipeListActivity> {
 
     @Subcomponent.Builder
-    abstract class Builder extends AndroidInjector.Builder<MainActivity> {}
+    abstract class Builder extends AndroidInjector.Builder<RecipeListActivity> {}
 
 }

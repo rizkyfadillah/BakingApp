@@ -1,28 +1,32 @@
 package com.rizkyfadillah.bakingapp.ui.recipedetail;
 
 import android.content.Context;
+import android.graphics.Color;
+import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.rizkyfadillah.bakingapp.R;
+import com.rizkyfadillah.bakingapp.vo.Ingredient;
 import com.rizkyfadillah.bakingapp.vo.Step;
+import com.squareup.picasso.Picasso;
 
 import java.util.List;
-
-import timber.log.Timber;
 
 /**
  * @author rizkyfadillah on 31/07/2017.
  */
 
 public class RecipeStepAdapter extends RecyclerView.Adapter<RecipeStepAdapter.StepViewHolder> {
-
     private OnStepClickListener callback;
 
     private List<Step> steps;
+
+    private int selectedItem;
 
     private Context context;
 
@@ -32,15 +36,15 @@ public class RecipeStepAdapter extends RecyclerView.Adapter<RecipeStepAdapter.St
     }
 
     @Override
-    public StepViewHolder onCreateViewHolder(ViewGroup viewGroup, int i) {
+    public RecipeStepAdapter.StepViewHolder onCreateViewHolder(ViewGroup viewGroup, int viewType) {
         context = viewGroup.getContext();
         View view = LayoutInflater.from(context).inflate(R.layout.item_step, viewGroup, false);
         return new StepViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(StepViewHolder stepViewHolder, int i) {
-        stepViewHolder.bind(steps.get(i), i);
+    public void onBindViewHolder(RecipeStepAdapter.StepViewHolder stepViewHolder, int position) {
+        stepViewHolder.bind(steps.get(position), position);
     }
 
     @Override
@@ -49,34 +53,51 @@ public class RecipeStepAdapter extends RecyclerView.Adapter<RecipeStepAdapter.St
     }
 
     class StepViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+        private TextView textShortDescription;
+        private ImageView imageStep;
+        private CardView cardStep;
+
+        private Step step;
 
         private int position;
-
-        private TextView textDescription;
 
         StepViewHolder(View itemView) {
             super(itemView);
 
-            textDescription = (TextView) itemView.findViewById(R.id.text_description);
+            cardStep = itemView.findViewById(R.id.card_step);
+            textShortDescription = itemView.findViewById(R.id.text_short_description);
+            imageStep = itemView.findViewById(R.id.image_step);
 
             itemView.setOnClickListener(this);
         }
 
         void bind(Step step, int position) {
-            Timber.d(steps.get(position).description);
             this.position = position;
-            textDescription.setText(step.description);
+            this.step = step;
+            textShortDescription.setText(step.shortDescription);
+            if (!step.thumbnailURL.isEmpty()) {
+                Picasso.with(context)
+                        .load(step.thumbnailURL)
+                        .into(imageStep);
+            }
+            if (selectedItem == position) {
+                cardStep.setCardBackgroundColor(Color.parseColor("#cccccc"));
+            } else {
+                cardStep.setCardBackgroundColor(Color.parseColor("#ffffff"));
+            }
         }
 
         @Override
         public void onClick(View view) {
-            callback.onClickStep(position);
+            selectedItem = position;
+            notifyDataSetChanged();
+            callback.onClickStep(position, step);
         }
 
     }
 
     interface OnStepClickListener {
-        void onClickStep(int position);
+        void onClickStep(int position, Step step);
     }
 
 }

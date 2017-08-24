@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v7.widget.LinearLayoutManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,6 +16,7 @@ import android.view.ViewGroup;
 import com.rizkyfadillah.bakingapp.R;
 import com.rizkyfadillah.bakingapp.StepDetailActivity;
 import com.rizkyfadillah.bakingapp.databinding.RecipeDetailFragmentBinding;
+import com.rizkyfadillah.bakingapp.vo.Ingredient;
 import com.rizkyfadillah.bakingapp.vo.Status;
 import com.rizkyfadillah.bakingapp.vo.Step;
 
@@ -35,7 +37,7 @@ public class RecipeDetailFragment extends LifecycleFragment implements RecipeSte
     @Inject
     ViewModelProvider.Factory viewModelFactory;
 
-    private final String EXTRA_RECIPE_ID = "recipe_id";
+    public static final String EXTRA_RECIPE_ID = "recipe_id";
 
     private RecipeDetailFragmentBinding binding;
 
@@ -43,13 +45,15 @@ public class RecipeDetailFragment extends LifecycleFragment implements RecipeSte
     private RecipeDetailViewModel2 recipeDetailViewModel2;
 
     private RecipeStepAdapter recipeStepAdapter;
+    private RecipeIngredientAdapter recipeIngredientAdapter;
 
     private List<Step> steps = new ArrayList<>();
+    private List<Ingredient> ingredients = new ArrayList<>();
 
     private OnStepClickListener mCallback;
 
     public interface OnStepClickListener {
-        void onStepSelected(int position);
+        void onStepSelected(int position, Step step);
     }
 
     @Nullable
@@ -58,7 +62,23 @@ public class RecipeDetailFragment extends LifecycleFragment implements RecipeSte
         binding = DataBindingUtil.inflate(inflater, R.layout.recipe_detail_fragment, container, false);
 
         recipeStepAdapter = new RecipeStepAdapter(this, steps);
+        recipeIngredientAdapter = new RecipeIngredientAdapter(ingredients);
+
         binding.recyclerviewStep.setAdapter(recipeStepAdapter);
+        binding.recyclerviewStep.setLayoutManager(new LinearLayoutManager(getContext()) {
+            @Override
+            public boolean canScrollVertically() {
+                return false;
+            }
+        });
+
+        binding.recyclerviewIngredient.setAdapter(recipeIngredientAdapter);
+        binding.recyclerviewIngredient.setLayoutManager(new LinearLayoutManager(getContext()) {
+            @Override
+            public boolean canScrollVertically() {
+                return false;
+            }
+        });
 
         return binding.getRoot();
     }
@@ -74,10 +94,35 @@ public class RecipeDetailFragment extends LifecycleFragment implements RecipeSte
 
         int recipeId = getActivity().getIntent().getIntExtra(EXTRA_RECIPE_ID, 0);
 
+        Timber.d(String.valueOf(recipeId));
+
         recipeDetailViewModel2.goGetRecipeDetail(recipeId);
 
-        showDetailRecipe2();
+//        showDetailRecipe2();
+        showDetailRecipe3();
 //        showDetailRecipe(recipeId);
+    }
+
+    private void showDetailRecipe3() {
+        recipeDetailViewModel2.getRecipe()
+                .observe(this, recipeResource -> {
+                    binding.setRecipe(recipeResource == null ? null : recipeResource.data);
+                    binding.setRecipeDetailResource(recipeResource);
+                    if (recipeResource != null) {
+                        if (recipeResource.status == Status.SUCCESS) {
+                            if (recipeResource.data != null) {
+//                                Timber.d(recipeResource.data.steps.size()+"");
+//                                Timber.d(recipeResource.data.ingredients.size()+"");
+                                steps.clear();
+                                ingredients.clear();
+                                steps.addAll(recipeResource.data.steps);
+                                ingredients.addAll(recipeResource.data.ingredients);
+                                recipeStepAdapter.notifyDataSetChanged();
+                                recipeIngredientAdapter.notifyDataSetChanged();
+                            }
+                        }
+                    }
+                });
     }
 
     private void showDetailRecipe2() {
@@ -128,8 +173,8 @@ public class RecipeDetailFragment extends LifecycleFragment implements RecipeSte
     }
 
     @Override
-    public void onClickStep(int position) {
-        mCallback.onStepSelected(position);
+    public void onClickStep(int position, Step step) {
+        mCallback.onStepSelected(position, step);
     }
 
 }
