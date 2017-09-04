@@ -9,6 +9,7 @@ import android.databinding.DataBindingUtil;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -61,6 +62,8 @@ public class RecipeDetailFragment extends LifecycleFragment implements RecipeSte
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = DataBindingUtil.inflate(inflater, R.layout.recipe_detail_fragment, container, false);
 
+        Timber.d("RecipeDetailFragment");
+
         recipeStepAdapter = new RecipeStepAdapter(this, steps);
         recipeIngredientAdapter = new RecipeIngredientAdapter(ingredients);
 
@@ -104,6 +107,7 @@ public class RecipeDetailFragment extends LifecycleFragment implements RecipeSte
     }
 
     private void showDetailRecipe3() {
+        Timber.d("showDetailRecipe3");
         recipeDetailViewModel2.getRecipe()
                 .observe(this, recipeResource -> {
                     binding.setRecipe(recipeResource == null ? null : recipeResource.data);
@@ -111,8 +115,8 @@ public class RecipeDetailFragment extends LifecycleFragment implements RecipeSte
                     if (recipeResource != null) {
                         if (recipeResource.status == Status.SUCCESS) {
                             if (recipeResource.data != null) {
-//                                Timber.d(recipeResource.data.steps.size()+"");
-//                                Timber.d(recipeResource.data.ingredients.size()+"");
+                                Timber.d(recipeResource.data.steps.size()+"");
+                                Timber.d(recipeResource.data.ingredients.size()+"");
                                 steps.clear();
                                 ingredients.clear();
                                 steps.addAll(recipeResource.data.steps);
@@ -125,22 +129,22 @@ public class RecipeDetailFragment extends LifecycleFragment implements RecipeSte
                 });
     }
 
-    private void showDetailRecipe2() {
-        recipeDetailViewModel2.getSteps()
-                .observe(this, recipeResource -> {
-                    binding.setRecipeDetailResource(recipeResource);
-                    if (recipeResource != null) {
-                        if (recipeResource.status == Status.SUCCESS) {
-                            if (recipeResource.data != null) {
-                                Timber.d(recipeResource.data.size()+"");
-                                steps.clear();
-                                steps.addAll(recipeResource.data);
-                                recipeStepAdapter.notifyDataSetChanged();
-                            }
-                        }
-                    }
-                });
-    }
+//    private void showDetailRecipe2() {
+//        recipeDetailViewModel2.getSteps()
+//                .observe(this, recipeResource -> {
+//                    binding.setRecipeDetailResource(recipeResource);
+//                    if (recipeResource != null) {
+//                        if (recipeResource.status == Status.SUCCESS) {
+//                            if (recipeResource.data != null) {
+//                                Timber.d(recipeResource.data.size()+"");
+//                                steps.clear();
+//                                steps.addAll(recipeResource.data);
+//                                recipeStepAdapter.notifyDataSetChanged();
+//                            }
+//                        }
+//                    }
+//                });
+//    }
 
 //    private void showDetailRecipe(int recipeId) {
 //        recipeDetailViewModel.getDetailRecipe(recipeId)
