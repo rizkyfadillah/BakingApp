@@ -17,9 +17,6 @@ import retrofit2.http.GET;
 public interface Service {
 
     @GET("topher/2017/May/59121517_baking/baking.json")
-    Flowable<List<Recipe>> getRecipes();
-
-    @GET("topher/2017/May/59121517_baking/baking.json")
-    LiveData<ApiResponse<List<Recipe>>> getRecipes2();
+    LiveData<ApiResponse<List<Recipe>>> getRecipes();
 
 }

@@ -45,4 +45,13 @@ public class Step {
         this.thumbnailURL = step.thumbnailURL;
     }
 
+    public Step(String description, String videoUrl) {
+        this.description = description;
+        this.videoURL = videoUrl;
+        this.thumbnailURL = null;
+        this.recipeId = 0;
+        this.stepId = null;
+        this.id = 0;
+        this.shortDescription = null;
+    }
 }

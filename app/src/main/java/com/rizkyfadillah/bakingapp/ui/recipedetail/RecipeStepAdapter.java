@@ -26,7 +26,7 @@ public class RecipeStepAdapter extends RecyclerView.Adapter<RecipeStepAdapter.St
 
     private List<Step> steps;
 
-    private int selectedItem;
+    private int selectedItem = 0;
 
     private Context context;
 
@@ -44,12 +44,17 @@ public class RecipeStepAdapter extends RecyclerView.Adapter<RecipeStepAdapter.St
 
     @Override
     public void onBindViewHolder(RecipeStepAdapter.StepViewHolder stepViewHolder, int position) {
-        stepViewHolder.bind(steps.get(position), position);
+        Step step = steps.get(position);
+        stepViewHolder.bind(step, position);
     }
 
     @Override
     public int getItemCount() {
         return steps.size();
+    }
+
+    public List<Step> getSteps() {
+        return steps;
     }
 
     class StepViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
@@ -93,7 +98,10 @@ public class RecipeStepAdapter extends RecyclerView.Adapter<RecipeStepAdapter.St
             notifyDataSetChanged();
             callback.onClickStep(position, step);
         }
+    }
 
+    void selectFirstItem() {
+        callback.onClickStep(0, steps.get(0));
     }
 
     interface OnStepClickListener {

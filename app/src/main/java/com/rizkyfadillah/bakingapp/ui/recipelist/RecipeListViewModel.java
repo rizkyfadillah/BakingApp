@@ -14,29 +14,36 @@ import java.util.List;
 
 import javax.inject.Inject;
 
-import io.reactivex.Flowable;
-import io.reactivex.Observable;
-import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.functions.Function;
-import io.reactivex.processors.BehaviorProcessor;
-import io.reactivex.subjects.BehaviorSubject;
-import timber.log.Timber;
-
 /**
- * @author rizkyfadillah on 29/07/2017.
+ * @author rizkyfadillah on 11/08/2017.
  */
 
 public class RecipeListViewModel extends ViewModel {
 
-    private RecipeRepository recipeRepository;
+    private final MutableLiveData<Boolean> goGetRecipes;
+
+    private LiveData<Resource<List<Recipe>>> recipes;
 
     @Inject
     RecipeListViewModel(RecipeRepository recipeRepository) {
-        this.recipeRepository = recipeRepository;
+        this.goGetRecipes = new MutableLiveData<>();
+        recipes = Transformations.switchMap(goGetRecipes, input -> {
+            if (input) {
+                return recipeRepository.getRecipes();
+            }
+            return AbsentLiveData.create();
+        });
     }
 
-    Flowable<Resource<List<Recipe>>> getRecipes() {
-        return recipeRepository.getRecipes();
+    LiveData<Resource<List<Recipe>>> getRecipes() {
+        return recipes;
     }
 
+    void recipesNeeded() {
+        goGetRecipes.setValue(true);
+    }
+
+    public void retry() {
+        recipesNeeded();
+    }
 }

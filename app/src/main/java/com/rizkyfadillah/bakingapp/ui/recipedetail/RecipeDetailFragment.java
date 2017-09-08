@@ -4,18 +4,15 @@ import android.arch.lifecycle.LifecycleFragment;
 import android.arch.lifecycle.ViewModelProvider;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
-import android.content.Intent;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.rizkyfadillah.bakingapp.R;
-import com.rizkyfadillah.bakingapp.StepDetailActivity;
 import com.rizkyfadillah.bakingapp.databinding.RecipeDetailFragmentBinding;
 import com.rizkyfadillah.bakingapp.vo.Ingredient;
 import com.rizkyfadillah.bakingapp.vo.Status;
@@ -39,11 +36,11 @@ public class RecipeDetailFragment extends LifecycleFragment implements RecipeSte
     ViewModelProvider.Factory viewModelFactory;
 
     public static final String EXTRA_RECIPE_ID = "recipe_id";
+    public static final String IS_TWO_PANE = "is_two_pane";
 
     private RecipeDetailFragmentBinding binding;
 
-    //    private RecipeDetailViewModel recipeDetailViewModel;
-    private RecipeDetailViewModel2 recipeDetailViewModel2;
+    private RecipeDetailViewModel recipeDetailViewModel;
 
     private RecipeStepAdapter recipeStepAdapter;
     private RecipeIngredientAdapter recipeIngredientAdapter;
@@ -53,8 +50,16 @@ public class RecipeDetailFragment extends LifecycleFragment implements RecipeSte
 
     private OnStepClickListener mCallback;
 
+    private boolean isTwoPane;
+
     public interface OnStepClickListener {
         void onStepSelected(int position, Step step);
+    }
+
+    @Override
+    public void setArguments(Bundle args) {
+        super.setArguments(args);
+        isTwoPane = args.getBoolean(IS_TWO_PANE, false);
     }
 
     @Nullable
@@ -90,25 +95,21 @@ public class RecipeDetailFragment extends LifecycleFragment implements RecipeSte
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-//        recipeDetailViewModel = ViewModelProviders.of(this, viewModelFactory)
-//                .get(RecipeDetailViewModel.class);
-        recipeDetailViewModel2 = ViewModelProviders.of(this, viewModelFactory)
-                .get(RecipeDetailViewModel2.class);
+        recipeDetailViewModel = ViewModelProviders.of(this, viewModelFactory)
+                .get(RecipeDetailViewModel.class);
 
         int recipeId = getActivity().getIntent().getIntExtra(EXTRA_RECIPE_ID, 0);
 
         Timber.d(String.valueOf(recipeId));
 
-        recipeDetailViewModel2.goGetRecipeDetail(recipeId);
+        recipeDetailViewModel.goGetRecipeDetail(recipeId);
 
-//        showDetailRecipe2();
-        showDetailRecipe3();
-//        showDetailRecipe(recipeId);
+        showDetailRecipe();
     }
 
-    private void showDetailRecipe3() {
+    private void showDetailRecipe() {
         Timber.d("showDetailRecipe3");
-        recipeDetailViewModel2.getRecipe()
+        recipeDetailViewModel.getRecipe()
                 .observe(this, recipeResource -> {
                     binding.setRecipe(recipeResource == null ? null : recipeResource.data);
                     binding.setRecipeDetailResource(recipeResource);
@@ -122,6 +123,9 @@ public class RecipeDetailFragment extends LifecycleFragment implements RecipeSte
                                 steps.addAll(recipeResource.data.steps);
                                 ingredients.addAll(recipeResource.data.ingredients);
                                 recipeStepAdapter.notifyDataSetChanged();
+                                if (isTwoPane) {
+                                    recipeStepAdapter.selectFirstItem();
+                                }
                                 recipeIngredientAdapter.notifyDataSetChanged();
                             }
                         }
@@ -129,39 +133,9 @@ public class RecipeDetailFragment extends LifecycleFragment implements RecipeSte
                 });
     }
 
-//    private void showDetailRecipe2() {
-//        recipeDetailViewModel2.getSteps()
-//                .observe(this, recipeResource -> {
-//                    binding.setRecipeDetailResource(recipeResource);
-//                    if (recipeResource != null) {
-//                        if (recipeResource.status == Status.SUCCESS) {
-//                            if (recipeResource.data != null) {
-//                                Timber.d(recipeResource.data.size()+"");
-//                                steps.clear();
-//                                steps.addAll(recipeResource.data);
-//                                recipeStepAdapter.notifyDataSetChanged();
-//                            }
-//                        }
-//                    }
-//                });
-//    }
-
-//    private void showDetailRecipe(int recipeId) {
-//        recipeDetailViewModel.getDetailRecipe(recipeId)
-//                .subscribe(recipeResource -> {
-//                    binding.setRecipeDetailResource(recipeResource);
-//                    if (recipeResource != null) {
-//                        if (recipeResource.status == Status.SUCCESS) {
-//                            if (recipeResource.data != null) {
-//                                Timber.d(recipeResource.data.steps.size()+"");
-//                                steps.clear();
-//                                steps.addAll(recipeResource.data.steps);
-//                                recipeStepAdapter.notifyDataSetChanged();
-//                            }
-//                        }
-//                    }
-//                });
-//    }
+    public List<Step> getSteps() {
+        return recipeStepAdapter.getSteps();
+    }
 
     @Override
     public void onAttach(Context context) {

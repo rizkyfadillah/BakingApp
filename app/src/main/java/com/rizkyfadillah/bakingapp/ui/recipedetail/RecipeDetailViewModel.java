@@ -1,37 +1,47 @@
 package com.rizkyfadillah.bakingapp.ui.recipedetail;
 
 import android.arch.lifecycle.LiveData;
+import android.arch.lifecycle.MutableLiveData;
+import android.arch.lifecycle.Transformations;
 import android.arch.lifecycle.ViewModel;
 
 import com.rizkyfadillah.bakingapp.repository.RecipeRepository;
 import com.rizkyfadillah.bakingapp.vo.Recipe;
 import com.rizkyfadillah.bakingapp.vo.Resource;
+import com.rizkyfadillah.bakingapp.vo.Step;
+
+import java.util.List;
 
 import javax.inject.Inject;
 
-import io.reactivex.Flowable;
-import io.reactivex.Observable;
-import io.reactivex.ObservableSource;
-import io.reactivex.functions.Function;
-import io.reactivex.subjects.BehaviorSubject;
-
 /**
- * @author rizkyfadillah on 31/07/2017.
+ * @author rizkyfadillah on 11/08/2017.
  */
 
 public class RecipeDetailViewModel extends ViewModel {
 
-    private Flowable<Resource<Recipe>> recipe;
+    private final MutableLiveData<Integer> recipeId = new MutableLiveData<>();
 
-    private RecipeRepository recipeRepository;
+    private LiveData<Resource<List<Step>>> steps;
+
+    private LiveData<Resource<Recipe>> recipe;
 
     @Inject
     RecipeDetailViewModel(RecipeRepository recipeRepository) {
-        this.recipeRepository = recipeRepository;
+        steps = Transformations.switchMap(recipeId, recipeRepository::getRecipeSteps);
+        recipe = Transformations.switchMap(recipeId, recipeRepository::getRecipeDetail);
     }
 
-    Flowable<Resource<Recipe>> getDetailRecipe(int recipeId) {
-        return recipeRepository.getDetailRecipe(recipeId);
+    public LiveData<Resource<List<Step>>> getSteps() {
+        return steps;
+    }
+
+    public LiveData<Resource<Recipe>> getRecipe() {
+        return recipe;
+    }
+
+    void goGetRecipeDetail(int recipeId) {
+        this.recipeId.postValue(recipeId);
     }
 
 }

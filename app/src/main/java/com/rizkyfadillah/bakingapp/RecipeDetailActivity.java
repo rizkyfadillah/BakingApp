@@ -1,6 +1,5 @@
 package com.rizkyfadillah.bakingapp;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -20,35 +19,42 @@ import dagger.android.AndroidInjection;
 import dagger.android.AndroidInjector;
 import dagger.android.DispatchingAndroidInjector;
 import dagger.android.support.HasSupportFragmentInjector;
-import timber.log.Timber;
 
 /**
  * @author rizkyfadillah on 30/07/2017.
  */
 
 public class RecipeDetailActivity extends AppCompatActivity
-        implements HasSupportFragmentInjector, RecipeDetailFragment.OnStepClickListener,
-        FragmentManager.OnBackStackChangedListener {
+        implements HasSupportFragmentInjector,
+        RecipeDetailFragment.OnStepClickListener, StepDetailFragment.OnNavigationClickListener {
 
     @Inject
     DispatchingAndroidInjector<Fragment> fragmentInjector;
+
+    private final String STATE_LAST_ACTIVE_FRAGMENT = "state_last_active_fragment";
+
+    private final String STATE_STEP_DESCRIPTION = "state_step_description";
+    private final String STATE_STEP_VIDEO_URL = "state_step_video_url";
 
     private FragmentManager fragmentManager;
 
     private boolean mTwoPane;
 
-    private String title;
-    private int id;
+    private int currrentStepPosition;
+
+    private RecipeDetailFragment recipeDetailFragment;
+    private StepDetailFragment stepDetailFragment;
+
+    private String activeFragment;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         AndroidInjection.inject(this);
 
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_recipe_detail2);
+        setContentView(R.layout.activity_recipe_detail);
 
-        title = getIntent().getStringExtra("recipe_name");
-        id = getIntent().getIntExtra("recipe_id", 0);
+        String title = getIntent().getStringExtra("recipe_name");
 
         if (getSupportActionBar() != null) {
             getSupportActionBar().setHomeButtonEnabled(true);
@@ -57,26 +63,48 @@ public class RecipeDetailActivity extends AppCompatActivity
 
         fragmentManager = getSupportFragmentManager();
 
-        fragmentManager.addOnBackStackChangedListener(this);
-
         if (findViewById(R.id.step_container) != null) {
             mTwoPane = true;
-
-            StepDetailFragment stepDetailFragment = new StepDetailFragment();
-
-            fragmentManager.beginTransaction()
-                    .replace(R.id.step_container, stepDetailFragment, "Step Detail")
-                    .setReorderingAllowed(true)
-                    .commit();
+            Step step = null;
+            if (savedInstanceState != null) {
+                if (savedInstanceState.getString(STATE_LAST_ACTIVE_FRAGMENT)
+                        .equals("Step Detail Fragment")) {
+                    activeFragment = "Step Detail Fragment";
+                } else if (savedInstanceState.getString(STATE_LAST_ACTIVE_FRAGMENT)
+                        .equals("Recipe Detail Fragment")) {
+                    activeFragment = "Recipe Detail Fragment";
+                }
+                String stepDescription = savedInstanceState.getString(STATE_STEP_DESCRIPTION);
+                String stepVideoUrl = savedInstanceState.getString(STATE_STEP_VIDEO_URL);
+                step = new Step(stepDescription, stepVideoUrl);
+            }
+            openStepDetail(step, R.id.step_container);
         } else {
             mTwoPane = false;
 
-            RecipeDetailFragment recipeDetailFragment = new RecipeDetailFragment();
+            if (savedInstanceState != null) {
+                if (savedInstanceState.getString(STATE_LAST_ACTIVE_FRAGMENT) != null) {
+                    if (savedInstanceState.getString(STATE_LAST_ACTIVE_FRAGMENT)
+                            .equals("Step Detail Fragment")) {
+                        openRecipeDetail();
 
-            FragmentTransaction transaction = fragmentManager.beginTransaction();
-            transaction.replace(R.id.fragment_container, recipeDetailFragment, "Recipe Detail Fragment")
-                    .setReorderingAllowed(true)
-                    .commit();
+                        activeFragment = "Step Detail Fragment";
+                        String stepDescription = savedInstanceState.getString(STATE_STEP_DESCRIPTION);
+                        String stepVideoUrl = savedInstanceState.getString(STATE_STEP_VIDEO_URL);
+                        Step step = new Step(stepDescription, stepVideoUrl);
+                        openStepDetail(step, R.id.fragment_container);
+                    } else {
+                        activeFragment = "Recipe Detail Fragment";
+                        openRecipeDetail();
+                    }
+                } else {
+                    activeFragment = "Recipe Detail Fragment";
+                    openRecipeDetail();
+                }
+            } else {
+                activeFragment = "Recipe Detail Fragment";
+                openRecipeDetail();
+            }
         }
     }
 
@@ -88,69 +116,54 @@ public class RecipeDetailActivity extends AppCompatActivity
     @Override
     public void onStepSelected(int position, Step step) {
         if (mTwoPane) {
-            StepDetailFragment stepDetailFragment = new StepDetailFragment();
-            Bundle bundle = new Bundle();
-            bundle.putString(StepDetailFragment.STEP_DESCRIPTION, step.description);
-            bundle.putString(StepDetailFragment.STEP_VIDEO_URL, step.videoURL);
-            stepDetailFragment.setArguments(bundle);
-
-            fragmentManager.beginTransaction()
-                    .replace(R.id.step_container, stepDetailFragment)
-                    .commit();
+            openStepDetail(step, R.id.step_container);
         } else {
-            StepDetailFragment stepDetailFragment = new StepDetailFragment();
-            Bundle bundle = new Bundle();
-            bundle.putString(StepDetailFragment.STEP_DESCRIPTION, step.description);
-            bundle.putString(StepDetailFragment.STEP_VIDEO_URL, step.videoURL);
-            stepDetailFragment.setArguments(bundle);
-
-            FragmentTransaction transaction = fragmentManager.beginTransaction();
-            transaction.replace(R.id.fragment_container, stepDetailFragment, "Step Detail Fragment")
-                    .addToBackStack(null)
-                    .commit();
-
-//            Intent intent = new Intent(this, StepDetailActivity.class);
-//            Bundle bundle = new Bundle();
-//            bundle.putString(StepDetailFragment.STEP_DESCRIPTION, step.description);
-//            bundle.putString(StepDetailFragment.STEP_VIDEO_URL, step.videoURL);
-//            bundle.putInt("recipe_id", id);
-//            intent.putExtras(bundle);
-//            startActivity(intent);
+            activeFragment = "Step Detail Fragment";
+            openStepDetail(step, R.id.fragment_container);
         }
     }
 
-//    @Override
-//    public void onBackPressed() {
-//        if (fragmentManager.getBackStackEntryCount() > 0) {
-//            Timber.d("masuk sini 1");
-//            fragmentManager.popBackStack();
-//        } else {
-//            Timber.d("masuk sini 2");
-//            fragmentManager.popBackStack();
-//            super.onBackPressed();
-//        }
-//    }
+    private void openStepDetail(Step step, int container) {
+        stepDetailFragment = new StepDetailFragment();
+
+        if (step != null) {
+            Bundle bundle = new Bundle();
+            bundle.putString(StepDetailFragment.STEP_DESCRIPTION, step.description);
+            bundle.putString(StepDetailFragment.STEP_VIDEO_URL, step.videoURL);
+            stepDetailFragment.setArguments(bundle);
+        }
+
+        FragmentTransaction transaction = fragmentManager.beginTransaction();
+        transaction.replace(container, stepDetailFragment, "Step Detail Fragment")
+                .addToBackStack(null)
+                .commit();
+    }
+
+    private void openRecipeDetail() {
+        recipeDetailFragment = new RecipeDetailFragment();
+
+        Bundle bundle = new Bundle();
+        if (mTwoPane) {
+            bundle.putBoolean(RecipeDetailFragment.IS_TWO_PANE, true);
+        } else {
+            bundle.putBoolean(RecipeDetailFragment.IS_TWO_PANE, false);
+        }
+        recipeDetailFragment.setArguments(bundle);
+
+        FragmentTransaction transaction = fragmentManager.beginTransaction();
+        transaction.replace(R.id.fragment_container, recipeDetailFragment, "Recipe Detail Fragment")
+                .setReorderingAllowed(true)
+                .commit();
+    }
 
     @Override
     public void onBackPressed() {
-        if (mTwoPane) {
+        if (mTwoPane || getSupportFragmentManager().findFragmentById(R.id.fragment_container)
+                instanceof RecipeDetailFragment) {
             NavUtils.navigateUpFromSameTask(this);
         } else {
             super.onBackPressed();
         }
-    }
-
-    @Override
-    public void onBackStackChanged() {
-        Timber.d("\n");
-        Timber.d(" Current status of the backstack: \n");
-
-        int count = fragmentManager.getBackStackEntryCount();
-        for (int i=count-1; i>=0; i--){
-            FragmentManager.BackStackEntry entry = fragmentManager.getBackStackEntryAt(i);
-            Timber.d(" "+entry.getName()+" \n");
-        }
-        Timber.d("\n");
     }
 
     @Override
@@ -170,4 +183,31 @@ public class RecipeDetailActivity extends AppCompatActivity
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    public void onClickNext() {
+        if (currrentStepPosition != recipeDetailFragment.getSteps().size()-1) {
+            openStepDetail(recipeDetailFragment.getSteps().get(currrentStepPosition+1), R.id.fragment_container);
+            currrentStepPosition = currrentStepPosition + 1;
+        }
+    }
+
+    @Override
+    public void onClickPrevious() {
+        if (currrentStepPosition != 0) {
+            openStepDetail(recipeDetailFragment.getSteps().get(currrentStepPosition-1), R.id.fragment_container);
+            currrentStepPosition = currrentStepPosition - 1;
+        }
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putString(STATE_LAST_ACTIVE_FRAGMENT, activeFragment);
+        if (activeFragment != null) {
+            if (activeFragment.equals("Step Detail Fragment")) {
+                outState.putString(STATE_STEP_DESCRIPTION, stepDetailFragment.getStepDescription());
+                outState.putString(STATE_STEP_VIDEO_URL, stepDetailFragment.getStepVideoUrl());
+            }
+        }
+        super.onSaveInstanceState(outState);
+    }
 }

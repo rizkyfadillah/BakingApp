@@ -18,6 +18,7 @@
         android:id="@+id/text_label_video_not_available"
         android:text="Video is not available"
         android:layout_gravity="center"
+        android:textColor="@android:color/white"
         android:visibility="gone"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content" />

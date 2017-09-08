@@ -114,7 +114,6 @@ public class StepDetailActivity extends AppCompatActivity
     public void onSaveInstanceState(Bundle outState, PersistableBundle outPersistentState) {
         outState.putString(StepDetailFragment.STEP_DESCRIPTION, stepDescription);
         outState.putString(StepDetailFragment.STEP_VIDEO_URL, stepVideoUrl);
-
         super.onSaveInstanceState(outState, outPersistentState);
     }
 }

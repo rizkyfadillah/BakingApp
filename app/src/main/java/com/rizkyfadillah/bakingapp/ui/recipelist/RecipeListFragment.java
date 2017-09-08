@@ -5,14 +5,9 @@ import android.arch.lifecycle.ViewModelProvider;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.Configuration;
 import android.databinding.DataBindingUtil;
-import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.LinearLayoutCompat;
-import android.support.v7.widget.LinearLayoutManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,7 +24,6 @@ import java.util.List;
 import javax.inject.Inject;
 
 import dagger.android.support.AndroidSupportInjection;
-import timber.log.Timber;
 
 /**
  * @author rizkyfadillah on 28/07/2017.
@@ -46,7 +40,7 @@ public class RecipeListFragment extends LifecycleFragment implements RecipeAdapt
     ViewModelProvider.Factory viewModelFactory;
 
     //    private RecipeListViewModel recipeListViewModel;
-    private RecipeListViewModel2 recipeListViewModel2;
+    private RecipeListViewModel recipeListViewModel;
 
     private List<Recipe> recipes = new ArrayList<>();
 
@@ -61,7 +55,7 @@ public class RecipeListFragment extends LifecycleFragment implements RecipeAdapt
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = DataBindingUtil.inflate(inflater, R.layout.recipe_list_fragment, container, false);
 
-        binding.setRetryCallback(() -> recipeListViewModel2.retry());
+        binding.setRetryCallback(() -> recipeListViewModel.retry());
 
         recipeAdapter = new RecipeAdapter(this, recipes);
         binding.recyclerviewRecipe.setAdapter(recipeAdapter);
@@ -75,16 +69,16 @@ public class RecipeListFragment extends LifecycleFragment implements RecipeAdapt
 
 //        recipeListViewModel = ViewModelProviders.of(this, viewModelFactory)
 //                .get(RecipeListViewModel.class);
-        recipeListViewModel2 = ViewModelProviders.of(this, viewModelFactory)
-                .get(RecipeListViewModel2.class);
+        recipeListViewModel = ViewModelProviders.of(this, viewModelFactory)
+                .get(RecipeListViewModel.class);
 
-        recipeListViewModel2.recipesNeeded();
+        recipeListViewModel.recipesNeeded();
 
         showRecipes();
     }
 
     private void showRecipes() {
-        recipeListViewModel2.getRecipes()
+        recipeListViewModel.getRecipes()
                 .observe(this, recipeResource -> {
                             binding.setRecipeResource(recipeResource);
                             if (recipeResource.status != Status.ERROR) {

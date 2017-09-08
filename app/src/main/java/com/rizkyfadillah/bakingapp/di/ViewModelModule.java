@@ -4,9 +4,7 @@ import android.arch.lifecycle.ViewModel;
 import android.arch.lifecycle.ViewModelProvider;
 
 import com.rizkyfadillah.bakingapp.ui.recipedetail.RecipeDetailViewModel;
-import com.rizkyfadillah.bakingapp.ui.recipedetail.RecipeDetailViewModel2;
 import com.rizkyfadillah.bakingapp.ui.recipelist.RecipeListViewModel;
-import com.rizkyfadillah.bakingapp.ui.recipelist.RecipeListViewModel2;
 
 import dagger.Binds;
 import dagger.Module;
@@ -25,18 +23,8 @@ public abstract class ViewModelModule {
 
     @Binds
     @IntoMap
-    @ViewModelKey(RecipeListViewModel2.class)
-    abstract ViewModel bindRecipeListViewModel2(RecipeListViewModel2 recipeListViewModel2);
-
-    @Binds
-    @IntoMap
     @ViewModelKey(RecipeDetailViewModel.class)
     abstract ViewModel bindRecipeDetailViewModel(RecipeDetailViewModel recipeDetailViewModel);
-
-    @Binds
-    @IntoMap
-    @ViewModelKey(RecipeDetailViewModel2.class)
-    abstract ViewModel bindRecipeDetailViewMode2l(RecipeDetailViewModel2 recipeDetailViewModel2);
 
     @Binds
     abstract ViewModelProvider.Factory bindViewModelFactory(CustomViewModelFactory factory);

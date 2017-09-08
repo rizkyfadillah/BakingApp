@@ -2,14 +2,12 @@ package com.rizkyfadillah.bakingapp.di;
 
 import android.app.Application;
 import android.arch.persistence.room.Room;
-import android.arch.persistence.room.RoomDatabase;
 import android.content.Context;
 
 import com.rizkyfadillah.bakingapp.api.Service;
 import com.rizkyfadillah.bakingapp.db.BakingDb;
 import com.rizkyfadillah.bakingapp.db.RecipeDao;
 import com.rizkyfadillah.bakingapp.repository.RecipeRepository;
-import com.rizkyfadillah.bakingapp.repository.RecipeRepository2;
 
 import javax.inject.Singleton;
 
@@ -51,12 +49,6 @@ class AppModule {
     @Provides
     RecipeRepository provideRecipeRepository(Service service, RecipeDao recipeDao, BakingDb db) {
         return new RecipeRepository(service, recipeDao, db);
-    }
-
-    @Singleton
-    @Provides
-    RecipeRepository2 provideRecipeRepository2(Service service, RecipeDao recipeDao, BakingDb db) {
-        return new RecipeRepository2(service, recipeDao, db);
     }
 
 }
