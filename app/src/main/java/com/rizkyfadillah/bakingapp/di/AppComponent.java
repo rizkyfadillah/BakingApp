@@ -3,6 +3,7 @@ package com.rizkyfadillah.bakingapp.di;
 import android.app.Application;
 
 import com.rizkyfadillah.bakingapp.BakingApp;
+import com.rizkyfadillah.bakingapp.GridWidgetService;
 
 import javax.inject.Singleton;
 
@@ -19,7 +20,8 @@ import dagger.android.AndroidInjectionModule;
                 AndroidInjectionModule.class,
                 AppModule.class,
                 ApiModule.class,
-                ActivityBuilder.class
+                ActivityBuilder.class,
+                ServiceBuilder.class
         }
 )
 public interface AppComponent {
@@ -31,6 +33,8 @@ public interface AppComponent {
                 AppComponent build();
         }
 
-        public void inject(BakingApp app);
+        void inject(BakingApp app);
+
+        void inject(GridWidgetService gridWidgetService);
 
 }

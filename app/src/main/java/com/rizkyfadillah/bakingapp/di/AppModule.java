@@ -4,6 +4,8 @@ import android.app.Application;
 import android.arch.persistence.room.Room;
 import android.content.Context;
 
+import com.rizkyfadillah.bakingapp.AppExecutors;
+import com.rizkyfadillah.bakingapp.RecipeListService;
 import com.rizkyfadillah.bakingapp.api.Service;
 import com.rizkyfadillah.bakingapp.db.BakingDb;
 import com.rizkyfadillah.bakingapp.db.RecipeDao;
@@ -21,7 +23,9 @@ import dagger.Provides;
         subcomponents = {
                 MainActivityComponent.class,
                 RecipeDetailActivityComponent.class,
-                StepDetailActivityComponent.class
+                StepDetailActivityComponent.class,
+                RecipeListServiceComponent.class,
+                GridWidgetServiceComponent.class
         },
         includes = ViewModelModule.class
 )
@@ -31,6 +35,12 @@ class AppModule {
     @Singleton
     Context provideContext(Application application) {
         return application;
+    }
+
+    @Provides
+    @Singleton
+    AppExecutors provideAppExecutors() {
+        return new AppExecutors();
     }
 
     @Provides
@@ -47,8 +57,8 @@ class AppModule {
 
     @Singleton
     @Provides
-    RecipeRepository provideRecipeRepository(Service service, RecipeDao recipeDao, BakingDb db) {
-        return new RecipeRepository(service, recipeDao, db);
+    RecipeRepository provideRecipeRepository(AppExecutors appExecutors, Service service, RecipeDao recipeDao, BakingDb db) {
+        return new RecipeRepository(appExecutors, service, recipeDao, db);
     }
 
 }

@@ -6,6 +6,7 @@ import android.arch.lifecycle.Transformations;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
+import com.rizkyfadillah.bakingapp.AppExecutors;
 import com.rizkyfadillah.bakingapp.api.ApiResponse;
 import com.rizkyfadillah.bakingapp.api.Service;
 import com.rizkyfadillah.bakingapp.db.BakingDb;
@@ -37,15 +38,17 @@ public class RecipeRepository {
     private Service service;
     private RecipeDao recipeDao;
     private BakingDb db;
+    private AppExecutors appExecutors;
 
-    public RecipeRepository(Service service, RecipeDao recipeDao, BakingDb db) {
+    public RecipeRepository(AppExecutors appExecutors, Service service, RecipeDao recipeDao, BakingDb db) {
+        this.appExecutors = appExecutors;
         this.service = service;
         this.recipeDao = recipeDao;
         this.db = db;
     }
 
     public LiveData<Resource<List<Recipe>>> getRecipes() {
-        return new NetworkBoundResource<List<Recipe>, List<Recipe>>() {
+        return new NetworkBoundResource<List<Recipe>, List<Recipe>>(appExecutors) {
             @Override
             protected void saveCallResult(@NonNull List<Recipe> recipes) {
                 for (Recipe recipe : recipes) {
@@ -94,7 +97,7 @@ public class RecipeRepository {
     }
 
     public LiveData<Resource<List<Step>>> getRecipeSteps(int recipeId) {
-        return new NetworkBoundResource<List<Step>, List<Step>>() {
+        return new NetworkBoundResource<List<Step>, List<Step>>(appExecutors) {
             @Override
             protected void saveCallResult(@NonNull List<Step> item) {
 
@@ -120,7 +123,7 @@ public class RecipeRepository {
     }
 
     public LiveData<Resource<Recipe>> getRecipeDetail(int recipeId) {
-        return new NetworkBoundResource<Recipe, Recipe>() {
+        return new NetworkBoundResource<Recipe, Recipe>(appExecutors) {
             @Override
             protected void saveCallResult(@NonNull Recipe item) {
 
@@ -134,22 +137,19 @@ public class RecipeRepository {
             @NonNull
             @Override
             protected LiveData<Recipe> loadFromDb() {
-                return Transformations.switchMap(recipeDao.loadRecipe(recipeId),
-                        recipe -> {
+                return Transformations.switchMap(recipeDao.loadRecipe(recipeId), recipe -> {
                             MediatorLiveData<Recipe> newRecipe = new MediatorLiveData<>();
                             LiveData<List<Step>> stepsDbResource = recipeDao.loadSteps(recipeId);
-                            newRecipe.addSource(recipeDao.loadSteps(recipeId),
-                                    steps -> {
-                                        newRecipe.removeSource(stepsDbResource);
-                                        recipe.steps = steps;
-                                        LiveData<List<Ingredient>> ingredientsDbResource = recipeDao.loadIngredients(recipeId);
-                                        newRecipe.addSource(ingredientsDbResource,
-                                                ingredients -> {
-                                                    newRecipe.removeSource(ingredientsDbResource);
-                                                    recipe.ingredients = ingredients;
-                                                    newRecipe.setValue(recipe);
-                                                });
-                                    });
+                            newRecipe.addSource(stepsDbResource, steps -> {
+                                newRecipe.removeSource(stepsDbResource);
+                                recipe.steps = steps;
+                                LiveData<List<Ingredient>> ingredientsDbResource = recipeDao.loadIngredients(recipeId);
+                                newRecipe.addSource(ingredientsDbResource, ingredients -> {
+                                    newRecipe.removeSource(ingredientsDbResource);
+                                    recipe.ingredients = ingredients;
+                                    newRecipe.setValue(recipe);
+                                });
+                            });
                             return newRecipe;
                         });
             }

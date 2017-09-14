@@ -120,14 +120,10 @@ public class StepDetailFragment extends Fragment implements ExoPlayer.EventListe
         Button buttonPrevious = rootview.findViewById(R.id.button_previous);
 
         if (buttonNext != null) {
-            buttonNext.setOnClickListener(view -> {
-                callback.onClickNext();
-            });
+            buttonNext.setOnClickListener(view -> callback.onClickNext());
         }
         if (buttonPrevious != null) {
-            buttonPrevious.setOnClickListener(view -> {
-                callback.onClickPrevious();
-            });
+            buttonPrevious.setOnClickListener(view -> callback.onClickPrevious());
         }
 
         mainHandler = new Handler();

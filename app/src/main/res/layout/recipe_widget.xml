@@ -1,0 +1,26 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <ImageView
+        android:id="@+id/widget_recipe_image"
+        android:layout_width="100dp"
+        android:layout_height="wrap_content"
+        android:adjustViewBounds="true"
+        android:layout_gravity="center"
+        tools:src="@drawable/chocolate_cake"
+        android:contentDescription="@string/image_recipe" />
+
+    <TextView
+        android:id="@+id/widget_recipe_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAlignment="center"
+        android:layout_gravity="center_horizontal"
+        android:textStyle="bold"
+        android:textSize="20sp"
+        tools:text="123" />
+
+</LinearLayout>

@@ -20,7 +20,7 @@
             android:maxHeight="200dp"
             android:adjustViewBounds="true"
             android:contentDescription="@string/recipe_image"
-            android:src="@drawable/chocolate_cake"
+            tools:src="@drawable/chocolate_cake"
             android:id="@+id/imageview_recipe" />
 
         <TextView

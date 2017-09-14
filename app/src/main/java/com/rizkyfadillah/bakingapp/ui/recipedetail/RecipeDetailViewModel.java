@@ -4,6 +4,7 @@ import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MutableLiveData;
 import android.arch.lifecycle.Transformations;
 import android.arch.lifecycle.ViewModel;
+import android.support.annotation.VisibleForTesting;
 
 import com.rizkyfadillah.bakingapp.repository.RecipeRepository;
 import com.rizkyfadillah.bakingapp.vo.Recipe;
@@ -19,21 +20,14 @@ import javax.inject.Inject;
  */
 
 public class RecipeDetailViewModel extends ViewModel {
-
+    @VisibleForTesting
     private final MutableLiveData<Integer> recipeId = new MutableLiveData<>();
-
-    private LiveData<Resource<List<Step>>> steps;
 
     private LiveData<Resource<Recipe>> recipe;
 
     @Inject
     RecipeDetailViewModel(RecipeRepository recipeRepository) {
-        steps = Transformations.switchMap(recipeId, recipeRepository::getRecipeSteps);
         recipe = Transformations.switchMap(recipeId, recipeRepository::getRecipeDetail);
-    }
-
-    public LiveData<Resource<List<Step>>> getSteps() {
-        return steps;
     }
 
     public LiveData<Resource<Recipe>> getRecipe() {
@@ -44,4 +38,8 @@ public class RecipeDetailViewModel extends ViewModel {
         this.recipeId.postValue(recipeId);
     }
 
+    public void retry() {
+        int currentRecipeId = recipeId.getValue();
+        recipeId.setValue(currentRecipeId);
+    }
 }

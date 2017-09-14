@@ -6,8 +6,7 @@ import com.rizkyfadillah.bakingapp.vo.Recipe;
 
 import java.util.List;
 
-import io.reactivex.Flowable;
-import io.reactivex.Observable;
+import retrofit2.Call;
 import retrofit2.http.GET;
 
 /**
@@ -18,5 +17,8 @@ public interface Service {
 
     @GET("topher/2017/May/59121517_baking/baking.json")
     LiveData<ApiResponse<List<Recipe>>> getRecipes();
+
+    @GET("topher/2017/May/59121517_baking/baking.json")
+    Call<List<Recipe>> getRecipes2();
 
 }

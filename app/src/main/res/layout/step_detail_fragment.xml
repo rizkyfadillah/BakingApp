@@ -22,7 +22,7 @@
 
         <TextView
             android:id="@+id/text_label_video_not_available"
-            android:text="Video is not available"
+            android:text="@string/video_is_not_available"
             android:layout_gravity="center"
             android:textColor="@android:color/white"
             android:visibility="gone"
@@ -47,7 +47,7 @@
         android:orientation="horizontal">
 
         <Button
-            android:text="Previous"
+            android:text="@string/previous"
             android:layout_weight="1"
             android:id="@+id/button_previous"
             style="?android:attr/buttonBarButtonStyle"
@@ -55,7 +55,7 @@
             android:layout_height="wrap_content" />
 
         <Button
-            android:text="Next"
+            android:text="@string/next"
             android:layout_weight="1"
             android:id="@+id/button_next"
             style="?android:attr/buttonBarButtonStyle"

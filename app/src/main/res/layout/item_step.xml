@@ -20,10 +20,11 @@
 
         <ImageView
             android:id="@+id/image_step"
-            android:src="@drawable/chocolate_cake"
+            tools:src="@drawable/chocolate_cake"
             android:adjustViewBounds="true"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:contentDescription="@string/image_step" />
 
         <TextView
             android:id="@+id/text_short_description"

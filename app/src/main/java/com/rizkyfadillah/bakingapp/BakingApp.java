@@ -2,12 +2,14 @@ package com.rizkyfadillah.bakingapp;
 
 import android.app.Activity;
 import android.app.Application;
+import android.app.Service;
 
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
 import com.google.android.exoplayer2.upstream.HttpDataSource;
+import com.rizkyfadillah.bakingapp.di.AppInjector;
 import com.rizkyfadillah.bakingapp.di.DaggerAppComponent;
 
 import javax.inject.Inject;
@@ -15,36 +17,31 @@ import javax.inject.Inject;
 import dagger.android.AndroidInjector;
 import dagger.android.DispatchingAndroidInjector;
 import dagger.android.HasActivityInjector;
+import dagger.android.HasServiceInjector;
 import timber.log.Timber;
 
 /**
  * @author rizkyfadillah on 28/07/2017.
  */
 
-public class BakingApp extends Application implements HasActivityInjector {
+public class BakingApp extends Application implements HasActivityInjector, HasServiceInjector {
 
     protected String userAgent;
 
     @Inject
     DispatchingAndroidInjector<Activity> dispatchingActivityInjector;
 
+    @Inject
+    DispatchingAndroidInjector<Service> dispatchingServiceInjector;
+
     @Override
     public void onCreate() {
         super.onCreate();
-
-        Timber.plant(new Timber.DebugTree());
-
+        if (BuildConfig.DEBUG) {
+            Timber.plant(new Timber.DebugTree());
+        }
         userAgent = "BakingApp";
-
-        DaggerAppComponent.builder()
-                .application(this)
-                .build()
-                .inject(this);
-    }
-
-    @Override
-    public AndroidInjector<Activity> activityInjector() {
-        return dispatchingActivityInjector;
+        AppInjector.init(this);
     }
 
     public DataSource.Factory buildDataSourceFactory(DefaultBandwidthMeter bandwidthMeter) {
@@ -56,4 +53,13 @@ public class BakingApp extends Application implements HasActivityInjector {
         return new DefaultHttpDataSourceFactory(userAgent, bandwidthMeter);
     }
 
+    @Override
+    public AndroidInjector<Activity> activityInjector() {
+        return dispatchingActivityInjector;
+    }
+
+    @Override
+    public AndroidInjector<Service> serviceInjector() {
+        return dispatchingServiceInjector;
+    }
 }

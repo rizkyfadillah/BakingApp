@@ -7,6 +7,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
 
+import com.rizkyfadillah.bakingapp.AppExecutors;
 import com.rizkyfadillah.bakingapp.api.ApiResponse;
 import com.rizkyfadillah.bakingapp.vo.Resource;
 
@@ -19,10 +20,13 @@ import io.reactivex.schedulers.Schedulers;
  */
 
 public abstract class NetworkBoundResource<ResultType, RequestType> {
+    private final AppExecutors appExecutors;
+
     private final MediatorLiveData<Resource<ResultType>> result = new MediatorLiveData<>();
 
     @MainThread
-    NetworkBoundResource() {
+    NetworkBoundResource(AppExecutors appExecutors) {
+        this.appExecutors = appExecutors;
         result.setValue(Resource.loading(null));
         LiveData<ResultType> dbSource = loadFromDb();
         result.addSource(dbSource, data -> {
@@ -44,12 +48,22 @@ public abstract class NetworkBoundResource<ResultType, RequestType> {
             result.removeSource(dbSource);
             //noinspection ConstantConditions
             if (response.isSuccessful()) {
-                mapToObservable(response.body)
-                        .subscribe(e -> {
-                            saveCallResult(e);
+//                mapToObservable(response.body)
+//                        .subscribe(e -> {
+//                            saveCallResult(e);
+//                            result.addSource(loadFromDb(),
+//                                    newData -> result.setValue(Resource.success(newData)));
+//                        });
+                appExecutors.diskIO().execute(() -> {
+                    saveCallResult(processResponse(response));
+                    appExecutors.mainThread().execute(() ->
+                            // we specially request a new live data,
+                            // otherwise we will get immediately last cached value,
+                            // which may not be updated with latest results received from network.
                             result.addSource(loadFromDb(),
-                                    newData -> result.setValue(Resource.success(newData)));
-                        });
+                                    newData -> result.setValue(Resource.success(newData)))
+                    );
+                });
             } else {
                 onFetchFailed();
                 result.addSource(dbSource,
@@ -58,11 +72,11 @@ public abstract class NetworkBoundResource<ResultType, RequestType> {
         });
     }
 
-    private Observable<RequestType> mapToObservable(RequestType body) {
-        return Observable.create(
-                (ObservableOnSubscribe<RequestType>) e -> e.onNext(body))
-                .subscribeOn(Schedulers.computation());
-    }
+//    private Observable<RequestType> mapToObservable(RequestType body) {
+//        return Observable.create(
+//                (ObservableOnSubscribe<RequestType>) e -> e.onNext(body))
+//                .subscribeOn(Schedulers.computation());
+//    }
 
     protected void onFetchFailed() {
     }

@@ -1,12 +1,15 @@
 package com.rizkyfadillah.bakingapp.ui.recipedetail;
 
 import android.arch.lifecycle.LifecycleFragment;
+import android.arch.lifecycle.LifecycleRegistry;
+import android.arch.lifecycle.LifecycleRegistryOwner;
 import android.arch.lifecycle.ViewModelProvider;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,6 +17,7 @@ import android.view.ViewGroup;
 
 import com.rizkyfadillah.bakingapp.R;
 import com.rizkyfadillah.bakingapp.databinding.RecipeDetailFragmentBinding;
+import com.rizkyfadillah.bakingapp.di.Injectable;
 import com.rizkyfadillah.bakingapp.vo.Ingredient;
 import com.rizkyfadillah.bakingapp.vo.Status;
 import com.rizkyfadillah.bakingapp.vo.Step;
@@ -30,13 +34,17 @@ import timber.log.Timber;
  * @author rizkyfadillah on 29/07/2017.
  */
 
-public class RecipeDetailFragment extends LifecycleFragment implements RecipeStepAdapter.OnStepClickListener {
+public class RecipeDetailFragment extends Fragment implements
+        LifecycleRegistryOwner, Injectable,
+        RecipeStepAdapter.OnStepClickListener {
 
     @Inject
     ViewModelProvider.Factory viewModelFactory;
 
     public static final String EXTRA_RECIPE_ID = "recipe_id";
     public static final String IS_TWO_PANE = "is_two_pane";
+
+    private final LifecycleRegistry lifecycleRegistry = new LifecycleRegistry(this);
 
     private RecipeDetailFragmentBinding binding;
 
@@ -51,6 +59,13 @@ public class RecipeDetailFragment extends LifecycleFragment implements RecipeSte
     private OnStepClickListener mCallback;
 
     private boolean isTwoPane;
+
+    private int recipeId;
+
+    @Override
+    public LifecycleRegistry getLifecycle() {
+        return lifecycleRegistry;
+    }
 
     public interface OnStepClickListener {
         void onStepSelected(int position, Step step);
@@ -67,7 +82,7 @@ public class RecipeDetailFragment extends LifecycleFragment implements RecipeSte
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = DataBindingUtil.inflate(inflater, R.layout.recipe_detail_fragment, container, false);
 
-        Timber.d("RecipeDetailFragment");
+        binding.setRetryCallback(() -> recipeDetailViewModel.retry());
 
         recipeStepAdapter = new RecipeStepAdapter(this, steps);
         recipeIngredientAdapter = new RecipeIngredientAdapter(ingredients);
@@ -98,9 +113,7 @@ public class RecipeDetailFragment extends LifecycleFragment implements RecipeSte
         recipeDetailViewModel = ViewModelProviders.of(this, viewModelFactory)
                 .get(RecipeDetailViewModel.class);
 
-        int recipeId = getActivity().getIntent().getIntExtra(EXTRA_RECIPE_ID, 0);
-
-        Timber.d(String.valueOf(recipeId));
+        recipeId = getActivity().getIntent().getIntExtra(EXTRA_RECIPE_ID, 0);
 
         recipeDetailViewModel.goGetRecipeDetail(recipeId);
 
@@ -108,16 +121,14 @@ public class RecipeDetailFragment extends LifecycleFragment implements RecipeSte
     }
 
     private void showDetailRecipe() {
-        Timber.d("showDetailRecipe3");
         recipeDetailViewModel.getRecipe()
                 .observe(this, recipeResource -> {
                     binding.setRecipe(recipeResource == null ? null : recipeResource.data);
                     binding.setRecipeDetailResource(recipeResource);
                     if (recipeResource != null) {
-                        if (recipeResource.status == Status.SUCCESS) {
+                        if (recipeResource.status == Status.SUCCESS ||
+                                recipeResource.status == Status.LOADING) {
                             if (recipeResource.data != null) {
-                                Timber.d(recipeResource.data.steps.size()+"");
-                                Timber.d(recipeResource.data.ingredients.size()+"");
                                 steps.clear();
                                 ingredients.clear();
                                 steps.addAll(recipeResource.data.steps);
@@ -130,6 +141,7 @@ public class RecipeDetailFragment extends LifecycleFragment implements RecipeSte
                             }
                         }
                     }
+                    binding.executePendingBindings();
                 });
     }
 
@@ -139,14 +151,13 @@ public class RecipeDetailFragment extends LifecycleFragment implements RecipeSte
 
     @Override
     public void onAttach(Context context) {
-        AndroidSupportInjection.inject(this);
         super.onAttach(context);
 
         try {
             mCallback = (OnStepClickListener) context;
         } catch (ClassCastException e) {
             throw new ClassCastException(context.toString()
-                    + " must implement OnImageClickListener");
+                    + " must implement OnStepClickListener");
         }
     }
 

@@ -4,12 +4,15 @@ import android.app.Activity;
 
 import com.rizkyfadillah.bakingapp.RecipeListActivity;
 import com.rizkyfadillah.bakingapp.RecipeDetailActivity;
+import com.rizkyfadillah.bakingapp.RecipeListService;
 import com.rizkyfadillah.bakingapp.StepDetailActivity;
+import com.rizkyfadillah.bakingapp.api.Service;
 
 import dagger.Binds;
 import dagger.Module;
 import dagger.android.ActivityKey;
 import dagger.android.AndroidInjector;
+import dagger.android.ServiceKey;
 import dagger.multibindings.IntoMap;
 
 /**

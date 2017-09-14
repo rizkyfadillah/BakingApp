@@ -67,8 +67,6 @@ public class RecipeListFragment extends LifecycleFragment implements RecipeAdapt
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-//        recipeListViewModel = ViewModelProviders.of(this, viewModelFactory)
-//                .get(RecipeListViewModel.class);
         recipeListViewModel = ViewModelProviders.of(this, viewModelFactory)
                 .get(RecipeListViewModel.class);
 
@@ -79,12 +77,12 @@ public class RecipeListFragment extends LifecycleFragment implements RecipeAdapt
 
     private void showRecipes() {
         recipeListViewModel.getRecipes()
-                .observe(this, recipeResource -> {
-                            binding.setRecipeResource(recipeResource);
-                            if (recipeResource.status != Status.ERROR) {
-                                if (recipeResource.data != null) {
+                .observe(this, recipesResource -> {
+                            binding.setRecipeResource(recipesResource);
+                            if (recipesResource.status != Status.ERROR) {
+                                if (recipesResource.data != null) {
                                     recipes.clear();
-                                    recipes.addAll(recipeResource.data);
+                                    recipes.addAll(recipesResource.data);
                                     recipeAdapter.notifyDataSetChanged();
                                 }
                             }
