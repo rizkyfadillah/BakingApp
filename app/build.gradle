@@ -12,10 +12,6 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "com.rizkyfadillah.bakingapp.util.BakingAppTestRunner"
-
-//        jackOptions {
-//            enabled true
-//        }
     }
     buildTypes {
         debug {
