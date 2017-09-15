@@ -1,5 +1,7 @@
 package com.rizkyfadillah.bakingapp;
 
+import android.appwidget.AppWidgetManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -10,6 +12,7 @@ import com.rizkyfadillah.bakingapp.api.Service;
 import com.rizkyfadillah.bakingapp.di.DaggerAppComponent;
 import com.rizkyfadillah.bakingapp.ui.recipedetail.RecipeDetailFragment;
 import com.rizkyfadillah.bakingapp.vo.Recipe;
+import com.squareup.picasso.Picasso;
 
 import java.io.IOException;
 import java.util.List;
@@ -43,14 +46,14 @@ public class GridWidgetService extends RemoteViewsService {
 
 class GridRemoteViewsFactory implements RemoteViewsService.RemoteViewsFactory {
 
-    private Context mContext;
+    private Context context;
 
     private List<Recipe> recipes;
 
     private Service service;
 
     GridRemoteViewsFactory(Context applicationContext, Service service) {
-        mContext = applicationContext;
+        context = applicationContext;
         this.service = service;
     }
 
@@ -59,7 +62,6 @@ class GridRemoteViewsFactory implements RemoteViewsService.RemoteViewsFactory {
         Timber.d("GridWidgetService");
     }
 
-    //called on start and when notifyAppWidgetViewDataChanged is called
     @Override
     public void onDataSetChanged() {
         Timber.d("onDataSetChanged");
@@ -79,25 +81,23 @@ class GridRemoteViewsFactory implements RemoteViewsService.RemoteViewsFactory {
         return recipes.size();
     }
 
-    /**
-     * This method acts like the onBindViewHolder method in an Adapter
-     *
-     * @param position The current position of the item in the GridView to be displayed
-     * @return The RemoteViews object to display for the provided postion
-     */
     @Override
     public RemoteViews getViewAt(int position) {
         int recipeId = recipes.get(position).id;
         String recipeName = recipes.get(position).name;
         String imgRes = recipes.get(position).image;
 
-        RemoteViews views = new RemoteViews(mContext.getPackageName(), R.layout.recipe_widget);
+        RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.recipe_widget);
 
-        // Update the plant image
-//        views.setImageViewResource(R.id.widget_recipe_image, imgRes);
+        AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
+        int[] appWidgetIds = appWidgetManager.getAppWidgetIds(new ComponentName(context, BakingAppWidgetProvider.class));
+        if (!imgRes.isEmpty()) {
+            Picasso picasso = Picasso.with(context);
+            picasso.load(imgRes)
+                    .into(views, R.id.image, appWidgetIds);
+        }
         views.setTextViewText(R.id.widget_recipe_name, String.valueOf(recipeName));
 
-        // Fill in the onClick PendingIntent Template using the specific plant Id for each item individually
         Bundle extras = new Bundle();
         extras.putInt(RecipeDetailFragment.EXTRA_RECIPE_ID, recipeId);
         Intent fillInIntent = new Intent();
@@ -115,7 +115,7 @@ class GridRemoteViewsFactory implements RemoteViewsService.RemoteViewsFactory {
 
     @Override
     public int getViewTypeCount() {
-        return 1; // Treat all items in the GridView the same
+        return 1;
     }
 
     @Override

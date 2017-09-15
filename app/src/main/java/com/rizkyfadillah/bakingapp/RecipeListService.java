@@ -36,13 +36,6 @@ public class RecipeListService extends DaggerIntentService {
         super("RecipeListService");
     }
 
-//    @Nullable
-//    @Override
-//    public IBinder onBind(Intent intent) {
-//        handleGetRecipes();
-//        return null;
-//    }
-
     public RecipeListService(String name) {
         super(name);
     }

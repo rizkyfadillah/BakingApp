@@ -39,8 +39,6 @@ import static org.mockito.Mockito.when;
 @RunWith(AndroidJUnit4.class)
 public class RecipeDetailFragmentTest {
 
-    private final int RECIPE_ID = 1;
-
     @Rule
     public ActivityTestRule<SingleFragmentActivity> activityRule = new ActivityTestRule<>(
             SingleFragmentActivity.class, true, true
@@ -108,6 +106,14 @@ public class RecipeDetailFragmentTest {
 
         onView(withId(R.id.progress_bar)).check(matches(not(isDisplayed())));
         onView(withId(R.id.error_and_retry_view)).check(matches(not(isDisplayed())));
+        onView(listMatcher().atPosition(0))
+                .check(matches(hasDescendant(withText("Aduk adonan"))));
+    }
+
+    @Test
+    public void testSteps() {
+        Recipe recipe = TestUtil.createRecipe(1, "Bolu Kemojo", 3, "");
+        this.recipe.postValue(Resource.success(recipe));
         onView(listMatcher().atPosition(0))
                 .check(matches(hasDescendant(withText("Aduk adonan"))));
     }

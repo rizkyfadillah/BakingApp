@@ -1,6 +1,7 @@
 package com.rizkyfadillah.bakingapp.ui.recipelist;
 
-import android.arch.lifecycle.LifecycleFragment;
+import android.arch.lifecycle.LifecycleRegistry;
+import android.arch.lifecycle.LifecycleRegistryOwner;
 import android.arch.lifecycle.ViewModelProvider;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
@@ -8,6 +9,7 @@ import android.content.Intent;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,6 +17,7 @@ import android.view.ViewGroup;
 import com.rizkyfadillah.bakingapp.R;
 import com.rizkyfadillah.bakingapp.RecipeDetailActivity;
 import com.rizkyfadillah.bakingapp.databinding.RecipeListFragmentBinding;
+import com.rizkyfadillah.bakingapp.di.Injectable;
 import com.rizkyfadillah.bakingapp.vo.Recipe;
 import com.rizkyfadillah.bakingapp.vo.Status;
 
@@ -23,13 +26,13 @@ import java.util.List;
 
 import javax.inject.Inject;
 
-import dagger.android.support.AndroidSupportInjection;
-
 /**
  * @author rizkyfadillah on 28/07/2017.
  */
 
-public class RecipeListFragment extends LifecycleFragment implements RecipeAdapter.OnRecipeClickListener {
+public class RecipeListFragment extends Fragment implements
+        LifecycleRegistryOwner, Injectable,
+        RecipeAdapter.OnRecipeClickListener {
 
     private static final String TAG = RecipeListFragment.class.getSimpleName();
 
@@ -39,7 +42,8 @@ public class RecipeListFragment extends LifecycleFragment implements RecipeAdapt
     @Inject
     ViewModelProvider.Factory viewModelFactory;
 
-    //    private RecipeListViewModel recipeListViewModel;
+    private final LifecycleRegistry lifecycleRegistry = new LifecycleRegistry(this);
+
     private RecipeListViewModel recipeListViewModel;
 
     private List<Recipe> recipes = new ArrayList<>();
@@ -92,7 +96,6 @@ public class RecipeListFragment extends LifecycleFragment implements RecipeAdapt
 
     @Override
     public void onAttach(Context context) {
-        AndroidSupportInjection.inject(this);
         super.onAttach(context);
     }
 
@@ -104,4 +107,8 @@ public class RecipeListFragment extends LifecycleFragment implements RecipeAdapt
         startActivity(intent);
     }
 
+    @Override
+    public LifecycleRegistry getLifecycle() {
+        return lifecycleRegistry;
+    }
 }

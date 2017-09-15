@@ -24,8 +24,8 @@ import dagger.android.support.HasSupportFragmentInjector;
  * @author rizkyfadillah on 30/07/2017.
  */
 
-public class RecipeDetailActivity extends AppCompatActivity
-        implements HasSupportFragmentInjector,
+public class RecipeDetailActivity extends AppCompatActivity implements
+        HasSupportFragmentInjector,
         RecipeDetailFragment.OnStepClickListener, StepDetailFragment.OnNavigationClickListener {
 
     @Inject

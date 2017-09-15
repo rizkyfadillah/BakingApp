@@ -6,11 +6,10 @@
 
     <ImageView
         android:id="@+id/widget_recipe_image"
-        android:layout_width="100dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:adjustViewBounds="true"
+        android:src="@android:color/darker_gray"
         android:layout_gravity="center"
-        tools:src="@drawable/chocolate_cake"
         android:contentDescription="@string/image_recipe" />
 
     <TextView

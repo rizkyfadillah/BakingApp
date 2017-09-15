@@ -20,8 +20,9 @@
 
         <ImageView
             android:id="@+id/image_step"
-            tools:src="@drawable/chocolate_cake"
+            android:src="@android:color/darker_gray"
             android:adjustViewBounds="true"
+            android:maxHeight="200dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:contentDescription="@string/image_step" />
