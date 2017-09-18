@@ -26,13 +26,6 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".RecipeListActivity" />
         </activity>
-        <activity
-            android:name=".StepDetailActivity"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".RecipeDetailActivity" />
-        </activity>
 
         <receiver android:name=".BakingAppWidgetProvider">
             <intent-filter>

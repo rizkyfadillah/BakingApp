@@ -10,6 +10,8 @@ import android.databinding.DataBindingUtil;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.widget.NestedScrollView;
+import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -39,16 +41,22 @@ public class RecipeDetailFragment extends Fragment implements
         RecipeStepAdapter.OnStepClickListener {
 
     @Inject
-    ViewModelProvider.Factory viewModelFactory;
+    public ViewModelProvider.Factory viewModelFactory;
+
+    public static final String TAG = RecipeDetailFragment.class.getSimpleName();
+
+    private static final String STATE_SCROLL_POSITION = "state_scroll_position";
+    private static final String STATE_SELECTED_STEP_POSITION = "state_selected_step_position";
 
     public static final String EXTRA_RECIPE_ID = "recipe_id";
-    public static final String IS_TWO_PANE = "is_two_pane";
+    public static final String EXTRA_RECIPE_NAME = "recipe_name";
+    public static final String EXTRA_IS_TWO_PANE = "is_two_pane";
 
     private final LifecycleRegistry lifecycleRegistry = new LifecycleRegistry(this);
 
     private RecipeDetailFragmentBinding binding;
 
-    private RecipeDetailViewModel recipeDetailViewModel;
+    public RecipeDetailViewModel recipeDetailViewModel;
 
     private RecipeStepAdapter recipeStepAdapter;
     private RecipeIngredientAdapter recipeIngredientAdapter;
@@ -62,9 +70,22 @@ public class RecipeDetailFragment extends Fragment implements
 
     private int recipeId;
 
+    private int scrollPosition;
+    private int scrollPositionY;
+    private int selectedStepPosition;
+    private boolean savedInstance;
+
     @Override
     public LifecycleRegistry getLifecycle() {
         return lifecycleRegistry;
+    }
+
+    public static RecipeDetailFragment createInstance(boolean mTwoPane) {
+        RecipeDetailFragment recipeDetailFragment = new RecipeDetailFragment();
+        Bundle args = new Bundle();
+        args.putBoolean(EXTRA_IS_TWO_PANE, mTwoPane);
+        recipeDetailFragment.setArguments(args);
+        return recipeDetailFragment;
     }
 
     public interface OnStepClickListener {
@@ -74,7 +95,7 @@ public class RecipeDetailFragment extends Fragment implements
     @Override
     public void setArguments(Bundle args) {
         super.setArguments(args);
-        isTwoPane = args.getBoolean(IS_TWO_PANE, false);
+        isTwoPane = args.getBoolean(EXTRA_IS_TWO_PANE, false);
     }
 
     @Nullable
@@ -103,12 +124,25 @@ public class RecipeDetailFragment extends Fragment implements
             }
         });
 
+        binding.nestedScrollView.setOnScrollChangeListener(new NestedScrollView.OnScrollChangeListener() {
+            @Override
+            public void onScrollChange(NestedScrollView v, int scrollX, int scrollY, int oldScrollX, int oldScrollY) {
+                scrollPositionY = scrollY;
+            }
+        });
+
         return binding.getRoot();
     }
 
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+
+        if (savedInstanceState != null) {
+            savedInstance = true;
+            scrollPosition = savedInstanceState.getInt(STATE_SCROLL_POSITION);
+            selectedStepPosition = savedInstanceState.getInt(STATE_SELECTED_STEP_POSITION);
+        }
 
         recipeDetailViewModel = ViewModelProviders.of(this, viewModelFactory)
                 .get(RecipeDetailViewModel.class);
@@ -134,10 +168,17 @@ public class RecipeDetailFragment extends Fragment implements
                                 steps.addAll(recipeResource.data.steps);
                                 ingredients.addAll(recipeResource.data.ingredients);
                                 recipeStepAdapter.notifyDataSetChanged();
-                                if (isTwoPane) {
-                                    recipeStepAdapter.selectFirstItem();
+                                if (getActivity().getSupportFragmentManager()
+                                        .findFragmentById(R.id.step_detail_fragment) != null) {
+//                                    if (savedInstance) {
+//                                        recipeStepAdapter.select(selectedStepPosition);
+//                                    } else {
+                                        recipeStepAdapter.selectFirstItem();
+//                                    }
                                 }
                                 recipeIngredientAdapter.notifyDataSetChanged();
+
+                                binding.nestedScrollView.setScrollY(scrollPosition);
                             }
                         }
                     }
@@ -163,7 +204,16 @@ public class RecipeDetailFragment extends Fragment implements
 
     @Override
     public void onClickStep(int position, Step step) {
+        this.selectedStepPosition = position;
         mCallback.onStepSelected(position, step);
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        outState.putInt(STATE_SCROLL_POSITION,
+                 scrollPositionY);
+        outState.putInt(STATE_SELECTED_STEP_POSITION, selectedStepPosition);
+        super.onSaveInstanceState(outState);
     }
 
 }

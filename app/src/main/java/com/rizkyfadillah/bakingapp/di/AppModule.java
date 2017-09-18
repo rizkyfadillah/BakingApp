@@ -23,7 +23,6 @@ import dagger.Provides;
         subcomponents = {
                 MainActivityComponent.class,
                 RecipeDetailActivityComponent.class,
-                StepDetailActivityComponent.class,
                 RecipeListServiceComponent.class,
                 GridWidgetServiceComponent.class
         },

@@ -5,6 +5,8 @@ import android.arch.persistence.room.Entity;
 import android.arch.persistence.room.ForeignKey;
 import android.arch.persistence.room.Index;
 import android.arch.persistence.room.PrimaryKey;
+import android.os.Parcel;
+import android.os.Parcelable;
 
 /**
  * @author rizkyfadillah on 30/07/2017.
@@ -45,7 +47,7 @@ public class Step {
         this.thumbnailURL = step.thumbnailURL;
     }
 
-    public Step(String description, String videoUrl) {
+    public Step(int id, String description, String videoUrl) {
         this.description = description;
         this.videoURL = videoUrl;
         this.thumbnailURL = null;
@@ -54,4 +56,5 @@ public class Step {
         this.id = 0;
         this.shortDescription = null;
     }
+
 }

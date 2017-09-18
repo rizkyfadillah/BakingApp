@@ -104,6 +104,10 @@ public class RecipeStepAdapter extends RecyclerView.Adapter<RecipeStepAdapter.St
         callback.onClickStep(0, steps.get(0));
     }
 
+    void select(int position) {
+        callback.onClickStep(position, steps.get(position));
+    }
+
     interface OnStepClickListener {
         void onClickStep(int position, Step step);
     }

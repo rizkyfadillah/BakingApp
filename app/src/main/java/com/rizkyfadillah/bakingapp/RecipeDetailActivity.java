@@ -1,6 +1,13 @@
 package com.rizkyfadillah.bakingapp;
 
+import android.arch.lifecycle.LifecycleRegistry;
+import android.arch.lifecycle.LifecycleRegistryOwner;
+import android.arch.lifecycle.ViewModelProvider;
+import android.arch.lifecycle.ViewModelProviders;
+import android.content.res.Configuration;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -8,10 +15,17 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.WindowManager;
 
 import com.rizkyfadillah.bakingapp.ui.recipedetail.RecipeDetailFragment;
+import com.rizkyfadillah.bakingapp.ui.recipedetail.RecipeDetailViewModel;
 import com.rizkyfadillah.bakingapp.ui.stepdetail.StepDetailFragment;
+import com.rizkyfadillah.bakingapp.vo.Status;
 import com.rizkyfadillah.bakingapp.vo.Step;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.inject.Inject;
 
@@ -19,33 +33,49 @@ import dagger.android.AndroidInjection;
 import dagger.android.AndroidInjector;
 import dagger.android.DispatchingAndroidInjector;
 import dagger.android.support.HasSupportFragmentInjector;
+import timber.log.Timber;
+
+import static com.rizkyfadillah.bakingapp.ui.recipedetail.RecipeDetailFragment.EXTRA_RECIPE_ID;
 
 /**
  * @author rizkyfadillah on 30/07/2017.
  */
 
 public class RecipeDetailActivity extends AppCompatActivity implements
+        LifecycleRegistryOwner,
         HasSupportFragmentInjector,
-        RecipeDetailFragment.OnStepClickListener, StepDetailFragment.OnNavigationClickListener {
+        FragmentManager.OnBackStackChangedListener,
+        RecipeDetailFragment.OnStepClickListener,
+        StepDetailFragment.OnNavigationClickListener {
 
     @Inject
     DispatchingAndroidInjector<Fragment> fragmentInjector;
 
-    private final String STATE_LAST_ACTIVE_FRAGMENT = "state_last_active_fragment";
+    @Inject
+    ViewModelProvider.Factory viewModelFactory;
 
-    private final String STATE_STEP_DESCRIPTION = "state_step_description";
-    private final String STATE_STEP_VIDEO_URL = "state_step_video_url";
+    private final LifecycleRegistry lifecycleRegistry = new LifecycleRegistry(this);
 
-    private FragmentManager fragmentManager;
+    private RecipeDetailViewModel recipeDetailViewModel;
+
+//    private final String STATE_LAST_ACTIVE_FRAGMENT = "state_last_active_fragment";
+//    private final String STATE_STEP_ID = "state_step_id";
+//    private final String STATE_STEP_DESCRIPTION = "state_step_description";
+//    private final String STATE_STEP_VIDEO_URL = "state_step_video_url";
+//    private final String STATE_STEP_POSITION = "state_step_position";
+
+//    private FragmentManager fragmentManager;
 
     private boolean mTwoPane;
 
     private int currrentStepPosition;
 
     private RecipeDetailFragment recipeDetailFragment;
-    private StepDetailFragment stepDetailFragment;
+//    private StepDetailFragment stepDetailFragment;
 
     private String activeFragment;
+
+    private List<Step> steps = new ArrayList<>();
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -61,52 +91,25 @@ public class RecipeDetailActivity extends AppCompatActivity implements
             getSupportActionBar().setTitle(title);
         }
 
-        fragmentManager = getSupportFragmentManager();
+        getSupportFragmentManager().addOnBackStackChangedListener(this);
 
-        if (findViewById(R.id.step_container) != null) {
-            mTwoPane = true;
-            Step step = null;
-            if (savedInstanceState != null) {
-                if (savedInstanceState.getString(STATE_LAST_ACTIVE_FRAGMENT)
-                        .equals("Step Detail Fragment")) {
-                    activeFragment = "Step Detail Fragment";
-                } else if (savedInstanceState.getString(STATE_LAST_ACTIVE_FRAGMENT)
-                        .equals("Recipe Detail Fragment")) {
-                    activeFragment = "Recipe Detail Fragment";
-                }
-                String stepDescription = savedInstanceState.getString(STATE_STEP_DESCRIPTION);
-                String stepVideoUrl = savedInstanceState.getString(STATE_STEP_VIDEO_URL);
-                step = new Step(stepDescription, stepVideoUrl);
-            }
-            openStepDetail(step, R.id.step_container);
-        } else {
+        if (findViewById(R.id.fragment_container) != null) {
             mTwoPane = false;
-
             if (savedInstanceState != null) {
-                if (savedInstanceState.getString(STATE_LAST_ACTIVE_FRAGMENT) != null) {
-                    if (savedInstanceState.getString(STATE_LAST_ACTIVE_FRAGMENT)
-                            .equals("Step Detail Fragment")) {
-                        openRecipeDetail();
-
-                        activeFragment = "Step Detail Fragment";
-                        String stepDescription = savedInstanceState.getString(STATE_STEP_DESCRIPTION);
-                        String stepVideoUrl = savedInstanceState.getString(STATE_STEP_VIDEO_URL);
-                        Step step = new Step(stepDescription, stepVideoUrl);
-                        openStepDetail(step, R.id.fragment_container);
-                    } else {
-                        activeFragment = "Recipe Detail Fragment";
-                        openRecipeDetail();
-                    }
-                } else {
-                    activeFragment = "Recipe Detail Fragment";
-                    openRecipeDetail();
-                }
-            } else {
-                activeFragment = "Recipe Detail Fragment";
-                openRecipeDetail();
+                return;
             }
+            openRecipeDetail();
+        } else {
+            mTwoPane = true;
         }
     }
+
+//    private Step getStepFromSavedInstance(Bundle savedInstanceState) {
+//        int stepId = savedInstanceState.getInt(STATE_STEP_ID);
+//        String stepDescription = savedInstanceState.getString(STATE_STEP_DESCRIPTION);
+//        String stepVideoUrl = savedInstanceState.getString(STATE_STEP_VIDEO_URL);
+//        return new Step(stepId, stepDescription, stepVideoUrl);
+//    }
 
     @Override
     public AndroidInjector<Fragment> supportFragmentInjector() {
@@ -115,55 +118,61 @@ public class RecipeDetailActivity extends AppCompatActivity implements
 
     @Override
     public void onStepSelected(int position, Step step) {
-        if (mTwoPane) {
-            openStepDetail(step, R.id.step_container);
+        StepDetailFragment stepDetailFragment = (StepDetailFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.step_detail_fragment);
+
+        if (stepDetailFragment != null && mTwoPane) {
+            stepDetailFragment.setStep(step);
         } else {
-            activeFragment = "Step Detail Fragment";
-            openStepDetail(step, R.id.fragment_container);
+            stepDetailFragment = StepDetailFragment.createInstance(step.id, step.description, step.videoURL);
+
+            FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+            transaction.replace(R.id.fragment_container, stepDetailFragment);
+            transaction.addToBackStack(null);
+            transaction.commit();
         }
     }
 
     private void openStepDetail(Step step, int container) {
-        stepDetailFragment = new StepDetailFragment();
+        StepDetailFragment stepDetailFragment = (StepDetailFragment) getSupportFragmentManager()
+                .findFragmentByTag(StepDetailFragment.TAG);
 
         if (step != null) {
-            Bundle bundle = new Bundle();
-            bundle.putString(StepDetailFragment.STEP_DESCRIPTION, step.description);
-            bundle.putString(StepDetailFragment.STEP_VIDEO_URL, step.videoURL);
-            stepDetailFragment.setArguments(bundle);
+            if (stepDetailFragment == null) {
+                stepDetailFragment = StepDetailFragment.createInstance(step.id, step.description, step.videoURL);
+            } else {
+                stepDetailFragment.setStep(step);
+            }
+        } else {
+            stepDetailFragment = StepDetailFragment.createInstance(0, null, null);
         }
 
-        FragmentTransaction transaction = fragmentManager.beginTransaction();
-        transaction.replace(container, stepDetailFragment, "Step Detail Fragment")
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        transaction.replace(container, stepDetailFragment, StepDetailFragment.TAG)
                 .addToBackStack(null)
                 .commit();
     }
 
     private void openRecipeDetail() {
-        recipeDetailFragment = new RecipeDetailFragment();
+        recipeDetailFragment = RecipeDetailFragment.createInstance(mTwoPane);
 
-        Bundle bundle = new Bundle();
-        if (mTwoPane) {
-            bundle.putBoolean(RecipeDetailFragment.IS_TWO_PANE, true);
-        } else {
-            bundle.putBoolean(RecipeDetailFragment.IS_TWO_PANE, false);
-        }
-        recipeDetailFragment.setArguments(bundle);
-
-        FragmentTransaction transaction = fragmentManager.beginTransaction();
-        transaction.replace(R.id.fragment_container, recipeDetailFragment, "Recipe Detail Fragment")
-                .setReorderingAllowed(true)
+        getSupportFragmentManager().beginTransaction()
+                .add(R.id.fragment_container, recipeDetailFragment, RecipeDetailFragment.TAG)
                 .commit();
     }
 
     @Override
     public void onBackPressed() {
-        if (mTwoPane || getSupportFragmentManager().findFragmentById(R.id.fragment_container)
-                instanceof RecipeDetailFragment) {
-            NavUtils.navigateUpFromSameTask(this);
-        } else {
+//        if (mTwoPane || getSupportFragmentManager().findFragmentById(R.id.fragment_container)
+//                instanceof RecipeDetailFragment) {
+//            NavUtils.navigateUpFromSameTask(this);
+//        } else if (getSupportFragmentManager().findFragmentById(R.id.fragment_container)
+//                instanceof StepDetailFragment) {
+//            activeFragment = RecipeDetailFragment.TAG;
+//            fragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+//        } else {
             super.onBackPressed();
-        }
+//        }
     }
 
     @Override
@@ -176,6 +185,9 @@ public class RecipeDetailActivity extends AppCompatActivity implements
                     NavUtils.navigateUpFromSameTask(this);
                 } else if (getSupportFragmentManager().findFragmentById(R.id.fragment_container)
                         instanceof StepDetailFragment) {
+                    activeFragment = RecipeDetailFragment.TAG;
+                    getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+                } else {
                     onBackPressed();
                 }
                 return true;
@@ -199,15 +211,33 @@ public class RecipeDetailActivity extends AppCompatActivity implements
         }
     }
 
+//    @Override
+//    protected void onSaveInstanceState(Bundle outState) {
+//        outState.putString(STATE_LAST_ACTIVE_FRAGMENT, activeFragment);
+//        if (activeFragment != null) {
+//            if (activeFragment.equals(StepDetailFragment.TAG)) {
+//                outState.putInt(STATE_STEP_ID, stepDetailFragment.getStepId());
+//                outState.putString(STATE_STEP_DESCRIPTION, stepDetailFragment.getStepDescription());
+//                outState.putString(STATE_STEP_VIDEO_URL, stepDetailFragment.getStepVideoUrl());
+//                outState.putInt(STATE_STEP_POSITION, currrentStepPosition);
+//            }
+//        }
+//        super.onSaveInstanceState(outState);
+//    }
+
     @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        outState.putString(STATE_LAST_ACTIVE_FRAGMENT, activeFragment);
-        if (activeFragment != null) {
-            if (activeFragment.equals("Step Detail Fragment")) {
-                outState.putString(STATE_STEP_DESCRIPTION, stepDetailFragment.getStepDescription());
-                outState.putString(STATE_STEP_VIDEO_URL, stepDetailFragment.getStepVideoUrl());
-            }
+    public LifecycleRegistry getLifecycle() {
+        return lifecycleRegistry;
+    }
+
+    @Override
+    public void onBackStackChanged() {
+        Timber.d("\n");
+        Timber.d(" Current status of the backstack: \n");
+        int count = getSupportFragmentManager().getBackStackEntryCount();
+        for (int i=count-1; i>=0; i--){
+            FragmentManager.BackStackEntry entry = getSupportFragmentManager().getBackStackEntryAt(i);
+            Timber.d(" "+entry.getName()+" \n");
         }
-        super.onSaveInstanceState(outState);
     }
 }

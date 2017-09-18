@@ -4,7 +4,7 @@
     android:layout_height="match_parent">
 
     <fragment
-        android:id="@+id/step_list_fragment"
+        android:id="@+id/recipe_detail_fragment"
         android:layout_width="400dp"
         android:layout_height="match_parent"
         android:name="com.rizkyfadillah.bakingapp.ui.recipedetail.RecipeDetailFragment"/>
@@ -14,10 +14,11 @@
         android:layout_height="match_parent"
         android:background="@android:color/darker_gray" />
 
-    <FrameLayout
-        android:id="@+id/step_container"
+    <fragment
+        android:id="@+id/step_detail_fragment"
+        android:name="com.rizkyfadillah.bakingapp.ui.stepdetail.StepDetailFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="16dp"/>
+        android:layout_margin="16dp"/>
 
 </LinearLayout>

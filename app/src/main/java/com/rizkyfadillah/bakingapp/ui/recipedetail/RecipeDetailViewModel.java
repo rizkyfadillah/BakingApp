@@ -26,7 +26,7 @@ public class RecipeDetailViewModel extends ViewModel {
     private LiveData<Resource<Recipe>> recipe;
 
     @Inject
-    RecipeDetailViewModel(RecipeRepository recipeRepository) {
+    public RecipeDetailViewModel(RecipeRepository recipeRepository) {
         recipe = Transformations.switchMap(recipeId, recipeRepository::getRecipeDetail);
     }
 
@@ -34,7 +34,7 @@ public class RecipeDetailViewModel extends ViewModel {
         return recipe;
     }
 
-    void goGetRecipeDetail(int recipeId) {
+    public void goGetRecipeDetail(int recipeId) {
         this.recipeId.postValue(recipeId);
     }
 

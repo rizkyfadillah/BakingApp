@@ -1,6 +1,9 @@
 package com.rizkyfadillah.bakingapp.ui.stepdetail;
 
+import android.arch.lifecycle.ViewModelProvider;
+import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -51,6 +54,10 @@ import com.google.android.exoplayer2.util.Util;
 import com.rizkyfadillah.bakingapp.BakingApp;
 import com.rizkyfadillah.bakingapp.EventLogger;
 import com.rizkyfadillah.bakingapp.R;
+import com.rizkyfadillah.bakingapp.ui.recipedetail.RecipeDetailViewModel;
+import com.rizkyfadillah.bakingapp.vo.Step;
+
+import javax.inject.Inject;
 
 import timber.log.Timber;
 
@@ -61,8 +68,18 @@ import timber.log.Timber;
 public class StepDetailFragment extends Fragment implements ExoPlayer.EventListener,
         PlaybackControlView.VisibilityListener {
 
+    @Inject
+    ViewModelProvider.Factory viewModelFactory;
+
+    public static final String TAG = StepDetailFragment.class.getSimpleName();
+
+    private static final String STATE_STEP_DESCRIPTION = "state_step_description";
+    private static final String STATE_STEP_VIDEO_URL = "state_step_video_url";
+
     public static final String STEP_DESCRIPTION = "step_description";
     public static final String STEP_VIDEO_URL = "step_video_url";
+    public static final String STEP_ID = "step_id";
+    public static final String NEED_RECIPE_DETAIL = "need_recipe_detail";
 
     private TextView textStepDescription;
 
@@ -84,8 +101,24 @@ public class StepDetailFragment extends Fragment implements ExoPlayer.EventListe
 
     private String stepDescription;
     private String stepVideoUrl;
+    public int stepId;
+
+    private  View rootview;
+
+    private int resumeWindow;
+    private long resumePosition;
 
     private OnNavigationClickListener callback;
+
+    public static StepDetailFragment createInstance(int id, String description, String videoURL) {
+        StepDetailFragment stepDetailFragment = new StepDetailFragment();
+        Bundle bundle = new Bundle();
+        bundle.putInt(STEP_ID, id);
+        bundle.putString(STEP_DESCRIPTION, description);
+        bundle.putString(STEP_VIDEO_URL, videoURL);
+        stepDetailFragment.setArguments(bundle);
+        return stepDetailFragment;
+    }
 
     public interface OnNavigationClickListener {
         void onClickNext();
@@ -95,6 +128,7 @@ public class StepDetailFragment extends Fragment implements ExoPlayer.EventListe
     @Override
     public void setArguments(Bundle args) {
         super.setArguments(args);
+        stepId = args.getInt(STEP_ID);
         stepDescription = args.getString(STEP_DESCRIPTION);
         stepVideoUrl = args.getString(STEP_VIDEO_URL);
     }
@@ -102,18 +136,23 @@ public class StepDetailFragment extends Fragment implements ExoPlayer.EventListe
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View rootview = inflater.inflate(R.layout.step_detail_fragment, container, false);
-
-        Log.d("StepDetailFragment", "StepDetailFragment");
+        rootview = inflater.inflate(R.layout.step_detail_fragment, container, false);
 
         playerView = rootview.findViewById(R.id.player_view);
 
         progressVideo = rootview.findViewById(R.id.progress_video);
         textLabelVideoNotAvailable = rootview.findViewById(R.id.text_label_video_not_available);
 
-        if (rootview.findViewById(R.id.text_step_description) != null) {
-            textStepDescription = rootview.findViewById(R.id.text_step_description);
+        textStepDescription = rootview.findViewById(R.id.text_step_description);
+
+        if (savedInstanceState != null) {
+            stepId = savedInstanceState.getInt(STEP_ID);
+            stepDescription = savedInstanceState.getString(STEP_DESCRIPTION);
+            stepVideoUrl = savedInstanceState.getString(STEP_VIDEO_URL);
+
             textStepDescription.setText(stepDescription);
+
+            initializePlayer();
         }
 
         Button buttonNext = rootview.findViewById(R.id.button_next);
@@ -135,18 +174,12 @@ public class StepDetailFragment extends Fragment implements ExoPlayer.EventListe
     @Override
     public void onStart() {
         super.onStart();
-        if (Util.SDK_INT > 23) {
-            progressVideo.setVisibility(View.VISIBLE);
-            initializePlayer();
-        }
-    }
+        Bundle args = getArguments();
+        if (args != null) {
+            Step step = new Step(stepId, stepDescription, stepVideoUrl);
+            setStep(step);
+        } else {
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        if ((Util.SDK_INT <= 23 || player == null)) {
-            progressVideo.setVisibility(View.VISIBLE);
-            initializePlayer();
         }
     }
 
@@ -164,6 +197,22 @@ public class StepDetailFragment extends Fragment implements ExoPlayer.EventListe
         if (Util.SDK_INT > 23) {
             releasePlayer();
         }
+    }
+
+    public void setStep(Step step) {
+        if (step.description != null) {
+            textStepDescription.setText(step.description);
+        }
+        stepId = step.id;
+        stepDescription = step.description;
+        stepVideoUrl = step.videoURL;
+        resumeWindow = C.INDEX_UNSET;
+        if (player != null) {
+            player.stop();
+            player.release();
+        }
+        player = null;
+        initializePlayer();
     }
 
     private void initializePlayer() {
@@ -196,11 +245,14 @@ public class StepDetailFragment extends Fragment implements ExoPlayer.EventListe
         if (needNewPlayer) {
             if (stepVideoUrl != null) {
                 if (!stepVideoUrl.isEmpty()) {
-                    Timber.d("masuk sini");
                     MediaSource mediaSource = buildMediaSource(Uri.parse(stepVideoUrl));
                     player.prepare(mediaSource, false, false);
+                    boolean haveResumePosition = resumeWindow != C.INDEX_UNSET;
+                    if (haveResumePosition) {
+                        player.seekTo(resumeWindow, resumePosition);
+                    }
+                    textLabelVideoNotAvailable.setVisibility(View.GONE);
                 } else {
-                    Timber.d("masuk sini 1");
                     player.stop();
                     textLabelVideoNotAvailable.setVisibility(View.VISIBLE);
                 }
@@ -234,9 +286,18 @@ public class StepDetailFragment extends Fragment implements ExoPlayer.EventListe
     }
 
     private void releasePlayer() {
-        player.stop();
-        player.release();
-        player = null;
+        if (player != null) {
+            player.stop();
+            updateResumePosition();
+            player.release();
+            player = null;
+        }
+    }
+
+    private void updateResumePosition() {
+        resumeWindow = player.getCurrentWindowIndex();
+        resumePosition = player.isCurrentWindowSeekable() ? Math.max(0, player.getCurrentPosition())
+                : C.TIME_UNSET;
     }
 
     @Override
@@ -248,56 +309,17 @@ public class StepDetailFragment extends Fragment implements ExoPlayer.EventListe
     }
 
     @Override
-    public void onTimelineChanged(Timeline timeline, Object manifest) {
-
-    }
-
-    @Override
-    public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {
-
-    }
-
-    @Override
-    public void onLoadingChanged(boolean isLoading) {
-
-    }
-
-    @Override
     public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
-//        if (playWhenReady) {
-//            progressVideo.setVisibility(View.GONE);
-//        } else {
-//            progressVideo.setVisibility(View.VISIBLE);
-//        }
         switch (playbackState) {
             case ExoPlayer.STATE_BUFFERING:
                 progressVideo.setVisibility(View.VISIBLE);
                 break;
-//            case ExoPlayer.STATE_ENDED:
-//                return "E";
-//            case ExoPlayer.STATE_IDLE:
-//                return "I";
             case ExoPlayer.STATE_READY:
                 progressVideo.setVisibility(View.GONE);
                 break;
             default:
                 progressVideo.setVisibility(View.GONE);
                 break;
-        }
-    }
-
-    private static String getStateString(int state) {
-        switch (state) {
-            case ExoPlayer.STATE_BUFFERING:
-                return "B";
-            case ExoPlayer.STATE_ENDED:
-                return "E";
-            case ExoPlayer.STATE_IDLE:
-                return "I";
-            case ExoPlayer.STATE_READY:
-                return "R";
-            default:
-                return "?";
         }
     }
 
@@ -334,15 +356,21 @@ public class StepDetailFragment extends Fragment implements ExoPlayer.EventListe
         if (errorString != null) {
             showToast(errorString);
         }
-//        needRetrySource = true;
-//        if (isBehindLiveWindow(e)) {
-//            clearResumePosition();
-//            initializePlayer();
-//        } else {
-//            updateResumePosition();
-//            updateButtonVisibilities();
-//            showControls();
-//        }
+    }
+
+    @Override
+    public void onTimelineChanged(Timeline timeline, Object manifest) {
+
+    }
+
+    @Override
+    public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {
+
+    }
+
+    @Override
+    public void onLoadingChanged(boolean isLoading) {
+
     }
 
     @Override
@@ -364,20 +392,6 @@ public class StepDetailFragment extends Fragment implements ExoPlayer.EventListe
         Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
     }
 
-    private static boolean isBehindLiveWindow(ExoPlaybackException e) {
-        if (e.type != ExoPlaybackException.TYPE_SOURCE) {
-            return false;
-        }
-        Throwable cause = e.getSourceException();
-        while (cause != null) {
-            if (cause instanceof BehindLiveWindowException) {
-                return true;
-            }
-            cause = cause.getCause();
-        }
-        return false;
-    }
-
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
@@ -390,11 +404,22 @@ public class StepDetailFragment extends Fragment implements ExoPlayer.EventListe
         }
     }
 
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        outState.putString(STATE_STEP_DESCRIPTION, stepDescription);
+        outState.putString(STATE_STEP_VIDEO_URL, stepVideoUrl);
+        super.onSaveInstanceState(outState);
+    }
+
     public String getStepDescription() {
         return stepDescription;
     }
 
     public String getStepVideoUrl() {
         return stepVideoUrl;
+    }
+
+    public int getStepId() {
+        return stepId;
     }
 }

@@ -10,6 +10,7 @@ import android.databinding.DataBindingUtil;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.LinearLayoutManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,6 +19,7 @@ import com.rizkyfadillah.bakingapp.R;
 import com.rizkyfadillah.bakingapp.RecipeDetailActivity;
 import com.rizkyfadillah.bakingapp.databinding.RecipeListFragmentBinding;
 import com.rizkyfadillah.bakingapp.di.Injectable;
+import com.rizkyfadillah.bakingapp.ui.recipedetail.RecipeDetailFragment;
 import com.rizkyfadillah.bakingapp.vo.Recipe;
 import com.rizkyfadillah.bakingapp.vo.Status;
 
@@ -36,8 +38,7 @@ public class RecipeListFragment extends Fragment implements
 
     private static final String TAG = RecipeListFragment.class.getSimpleName();
 
-    private final String EXTRA_RECIPE_ID = "recipe_id";
-    private final String EXTRA_RECIPE_NAME = "recipe_name";
+    private static final String STATE_SCROLL_POSITION = "state_scroll_position";
 
     @Inject
     ViewModelProvider.Factory viewModelFactory;
@@ -49,6 +50,8 @@ public class RecipeListFragment extends Fragment implements
     private List<Recipe> recipes = new ArrayList<>();
 
     private RecipeAdapter recipeAdapter;
+
+    private int scrollPosition;
 
     private RecipeListFragmentBinding binding;
 
@@ -71,6 +74,12 @@ public class RecipeListFragment extends Fragment implements
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
+        setRetainInstance(true);
+
+        if (savedInstanceState != null) {
+            scrollPosition = savedInstanceState.getInt(STATE_SCROLL_POSITION);
+        }
+
         recipeListViewModel = ViewModelProviders.of(this, viewModelFactory)
                 .get(RecipeListViewModel.class);
 
@@ -88,6 +97,7 @@ public class RecipeListFragment extends Fragment implements
                                     recipes.clear();
                                     recipes.addAll(recipesResource.data);
                                     recipeAdapter.notifyDataSetChanged();
+                                    binding.recyclerviewRecipe.smoothScrollToPosition(scrollPosition);
                                 }
                             }
                         }
@@ -102,13 +112,22 @@ public class RecipeListFragment extends Fragment implements
     @Override
     public void onClickRecipe(int position) {
         Intent intent = new Intent(getActivity(), RecipeDetailActivity.class);
-        intent.putExtra(EXTRA_RECIPE_ID, recipes.get(position).id);
-        intent.putExtra(EXTRA_RECIPE_NAME, recipes.get(position).name);
+        intent.putExtra(RecipeDetailFragment.EXTRA_RECIPE_ID, recipes.get(position).id);
+        intent.putExtra(RecipeDetailFragment.EXTRA_RECIPE_NAME, recipes.get(position).name);
         startActivity(intent);
     }
 
     @Override
     public LifecycleRegistry getLifecycle() {
         return lifecycleRegistry;
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        outState.putInt(STATE_SCROLL_POSITION,
+                ((LinearLayoutManager) binding.recyclerviewRecipe.getLayoutManager())
+                        .findLastCompletelyVisibleItemPosition());
+
+        super.onSaveInstanceState(outState);
     }
 }
